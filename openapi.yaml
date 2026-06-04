@@ -1,0 +1,1132 @@
+openapi: 3.0.3
+info:
+  title: Convertrilo Encode API
+  version: "1.0.0"
+  description: |
+    JWT-protected API for creating and managing encode jobs. Supports browser-upload, direct URL ingest, or S3 source.
+    Public endpoints are limited and rate-limited.
+servers:
+  - url: http://localhost:3001
+    description: Local backend
+  - url: https://api.example.com
+    description: Production (replace with your deployed base URL)
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    AuthLoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+    AuthLoginResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+    TokenBalanceResponse:
+      type: object
+      properties:
+        available: { type: number }
+        reserved: { type: number }
+        trialGrantRemaining: { type: number }
+        trialExpiresAt: { type: string, format: date-time, nullable: true }
+    TokenReserveRequest:
+      type: object
+      required: [jobId, amount]
+      properties:
+        jobId: { type: string, format: uuid }
+        amount: { type: integer, minimum: 1 }
+    TokenDeductRequest:
+      type: object
+      required: [jobId, amount]
+      properties:
+        jobId: { type: string, format: uuid }
+        amount: { type: integer, minimum: 1 }
+    JobCreateRequest:
+      type: object
+      required: [codec, resolution, fps]
+      properties:
+        codec:
+          type: string
+          enum: [h264, h265, av1]
+        resolution:
+          type: string
+          enum: [480p, 720p, 1080p, 1440p, 2160p, 4320p]
+        fps:
+          type: integer
+          minimum: 1
+          maximum: 240
+        container:
+          type: string
+          enum: [mp4, mkv, webm, mov]
+          default: mp4
+        preset:
+          type: string
+          enum: [fast, standard, slow]
+          default: fast
+        bitrateTier:
+          type: string
+          enum: [low, medium, high]
+          default: medium
+        passes:
+          type: integer
+          enum: [1, 2]
+          default: 1
+        policy:
+          type: string
+          enum: [fastest, gpu_first, gpu_only]
+          default: gpu_first
+        quality:
+          type: string
+          enum: [good, better, best]
+        sourceUrl:
+          type: string
+          format: uri
+          description: Optional direct HTTP(S) ingest. When provided, upload URL is not returned.
+        sourceS3:
+          type: object
+          properties:
+            bucket: { type: string }
+            key: { type: string }
+            endpoint: { type: string }
+            region: { type: string }
+            accessKeyId: { type: string }
+            secretAccessKey: { type: string }
+            forcePathStyle: { type: boolean }
+        confirm: { type: boolean, default: false }
+        optimize: { type: string, enum: [none, vmaf] }
+        vmafTarget: { type: number, minimum: 50, maximum: 99 }
+    JobCreateResponse:
+      type: object
+      required: [jobId, upload, output]
+      properties:
+        jobId: { type: string }
+        upload:
+          nullable: true
+          type: object
+          properties:
+            url: { type: string }
+            key: { type: string }
+        output:
+          type: object
+          properties:
+            key: { type: string }
+            publicUrl: { type: string }
+        estimate:
+          type: object
+          properties:
+            neu: { type: number }
+    ProbeDurationResponse:
+      type: object
+      properties:
+        durationSec: { type: number }
+        durationMinutes: { type: number }
+    ApproveUnifiedRequest:
+      type: object
+      properties:
+        codec: { type: string, enum: [h264, h265, av1] }
+        resolution: { type: string }
+        fps: { type: integer }
+        preset: { type: string, enum: [fast, standard, slow] }
+        bitrateTier: { type: string, enum: [low, medium, high] }
+        passes: { type: integer, enum: [1, 2] }
+        policy: { type: string, enum: [gpu_only, gpu_first, fastest] }
+        container: { type: string, enum: [mp4, mkv, webm, mov] }
+        quality: { type: string, enum: [good, better, best] }
+        optimize: { type: string, enum: [none, vmaf] }
+        vmafTarget: { type: number, minimum: 50, maximum: 99 }
+    ApproveUnifiedResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        estimate:
+          type: object
+          properties:
+            perMinuteNeu: { type: number }
+            durationSec: { type: number }
+            totalNeu: { type: number }
+            reserved: { type: number }
+    ConfirmRequest:
+      type: object
+      properties:
+        container: { type: string, enum: [mp4, mkv, webm, mov] }
+        quality: { type: string, enum: [good, better, best] }
+        optimize: { type: string, enum: [none, vmaf] }
+        vmafTarget: { type: number, minimum: 1, maximum: 100 }
+    ConfirmResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+    StatusResponse:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string }
+        downloadUrl: { type: string, nullable: true }
+        encoder: { type: string, nullable: true }
+        pct: { type: number, nullable: true }
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string }
+
+    # Bulk Jobs
+    BulkCreateRequest:
+      type: object
+      required: [jobs]
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/JobCreateRequest"
+        settings:
+          type: object
+          required: []
+          properties:
+            failFast: { type: boolean, default: false }
+            dryRun: { type: boolean, default: false }
+            confirm: { type: boolean, default: false }
+            container: { type: string, enum: [mp4, mkv, webm, mov] }
+            quality: { type: string, enum: [good, better, best] }
+            optimize: { type: string, enum: [none, vmaf] }
+            vmafTarget: { type: number, minimum: 50, maximum: 99 }
+    BulkCreateResponse:
+      type: object
+      properties:
+        totalJobs: { type: integer }
+        totalEstimatedNeu: { type: number }
+        jobs:
+          type: array
+          items:
+            type: object
+            properties:
+              index: { type: integer }
+              jobId: { type: string, format: uuid }
+              status: { type: string }
+              error: { type: string }
+    BulkStatusResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusResponse"
+        missing:
+          type: array
+          items: { type: string }
+    BulkConfirmRequest:
+      type: object
+      required: [jobIds]
+      properties:
+        jobIds:
+          type: array
+          items: { type: string, format: uuid }
+        settings:
+          type: object
+          properties:
+            container: { type: string, enum: [mp4, mkv, webm, mov] }
+            quality: { type: string, enum: [good, better, best] }
+
+    # API Keys
+    ApiKeyCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        scopes:
+          type: array
+          items: { type: string }
+        expiresInDays: { type: integer, minimum: 1, maximum: 365 }
+    ApiKeyResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        key: { type: string, description: "Raw key, only returned on creation" }
+        prefix: { type: string }
+        scopes:
+          type: array
+          items: { type: string }
+        expiresAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+    ApiKeyListResponse:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApiKeyResponse"
+
+    # Webhooks
+    WebhookCreateRequest:
+      type: object
+      required: [url, events]
+      properties:
+        url: { type: string, format: uri }
+        events:
+          type: array
+          items:
+            type: string
+            enum:
+              [
+                job.created,
+                job.queued,
+                job.running,
+                job.completed,
+                job.failed,
+                job.canceled,
+              ]
+    WebhookResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        url: { type: string }
+        events:
+          type: array
+          items: { type: string }
+        secret:
+          {
+            type: string,
+            description: "HMAC secret, only returned on creation",
+          }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    WebhookListResponse:
+      type: object
+      properties:
+        webhooks:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookResponse"
+
+    # On-Demand Encoding
+    S3Output:
+      type: object
+      required: [bucket, key]
+      properties:
+        bucket: { type: string }
+        key: { type: string }
+        endpoint: { type: string, format: uri }
+        region: { type: string }
+        accessKeyId: { type: string }
+        secretAccessKey: { type: string, format: password }
+        forcePathStyle: { type: boolean }
+    S3FolderSource:
+      type: object
+      required: [bucket]
+      properties:
+        bucket: { type: string }
+        prefix: { type: string, default: "" }
+        endpoint: { type: string, format: uri }
+        region: { type: string }
+        accessKeyId: { type: string }
+        secretAccessKey: { type: string, format: password }
+        forcePathStyle: { type: boolean, default: true }
+    S3FolderOutput:
+      type: object
+      required: [bucket]
+      properties:
+        bucket: { type: string }
+        prefix: { type: string, default: outputs/ }
+        endpoint: { type: string, format: uri }
+        region: { type: string }
+        accessKeyId: { type: string }
+        secretAccessKey: { type: string, format: password }
+        forcePathStyle: { type: boolean, default: true }
+    GoogleDriveFolderSource:
+      type: object
+      required: [folderId]
+      properties:
+        folderId: { type: string }
+        accessToken:
+          type: string
+          description: Short-lived Google OAuth access token supplied by the API caller.
+        refreshToken:
+          type: string
+          description: Optional Google refresh token supplied by the API caller for long-running jobs.
+    GoogleDriveOutput:
+      type: object
+      required: [folderId]
+      properties:
+        folderId: { type: string }
+        fileName: { type: string }
+        accessToken:
+          type: string
+          description: Short-lived Google OAuth access token supplied by the API caller.
+        refreshToken:
+          type: string
+          description: Optional Google refresh token supplied by the API caller for long-running jobs.
+    OnDemandEncodeRequest:
+      type: object
+      required: [sourceUrl]
+      properties:
+        sourceUrl: { type: string, format: uri }
+        codec: { type: string, enum: [h264, h265, av1], default: h264 }
+        resolution:
+          {
+            type: string,
+            enum: [480p, 720p, 1080p, 1440p, 2160p],
+            default: 1080p,
+          }
+        fps: { type: integer, minimum: 1, maximum: 120, default: 30 }
+        preset: { type: string, enum: [fast, standard, slow], default: fast }
+        bitrateTier:
+          { type: string, enum: [low, medium, high], default: medium }
+        container: { type: string, enum: [mp4, mkv, webm, mov], default: mp4 }
+        quality: { type: string, enum: [good, better, best], default: better }
+        priority: { type: string, enum: [normal, high], default: normal }
+        outputExpiry:
+          { type: integer, minimum: 3600, maximum: 604800, default: 86400 }
+        webhook: { type: string, format: uri }
+        outputS3:
+          $ref: "#/components/schemas/S3Output"
+        outputGoogleDrive:
+          $ref: "#/components/schemas/GoogleDriveOutput"
+        outputDropbox:
+          deprecated: true
+          description: Deprecated. Requests using Dropbox output return 410 Gone.
+          type: object
+          properties:
+            path: { type: string }
+            accessToken: { type: string }
+    OnDemandEncodeResponse:
+      type: object
+      required: [jobId, status, statusUrl]
+      properties:
+        jobId: { type: string, format: uuid }
+        status: { type: string }
+        estimatedDuration: { type: integer }
+        pricing:
+          type: object
+          properties:
+            basePerMinute: { type: number }
+            onDemandPerMinute: { type: number }
+            multiplier: { type: number }
+            totalNeu: { type: number }
+            reserved: { type: number }
+        statusUrl: { type: string }
+        webhook: { type: string, nullable: true }
+    OnDemandStatusResponse:
+      type: object
+      properties:
+        jobId: { type: string, format: uuid }
+        status: { type: string }
+        progress: { type: number, nullable: true }
+        encoder: { type: string, nullable: true }
+        downloadUrl: { type: string, nullable: true }
+        expiresIn: { type: integer, nullable: true }
+        destination:
+          oneOf:
+            - type: object
+              properties:
+                type: { type: string, enum: [cdn] }
+            - type: object
+              properties:
+                type: { type: string, enum: [s3] }
+                bucket: { type: string }
+                key: { type: string }
+            - type: object
+              properties:
+                type: { type: string, enum: [google-drive] }
+                folderId: { type: string }
+                fileName: { type: string, nullable: true }
+          nullable: true
+        createdAt: { type: string, format: date-time }
+        startedAt: { type: string, format: date-time, nullable: true }
+        finishedAt: { type: string, format: date-time, nullable: true }
+        failureMessage: { type: string, nullable: true }
+    OnDemandFolderIngestRequest:
+      type: object
+      properties:
+        codec: { type: string, enum: [h264, h265, av1], default: h264 }
+        resolution:
+          {
+            type: string,
+            enum: [480p, 720p, 1080p, 1440p, 2160p, 4320p],
+            default: 1080p,
+          }
+        fps: { type: integer, minimum: 1, maximum: 120, default: 30 }
+        preset: { type: string, enum: [fast, standard, slow], default: fast }
+        bitrateTier:
+          { type: string, enum: [low, medium, high], default: medium }
+        passes: { type: integer, minimum: 1, maximum: 2, default: 1 }
+        optimize: { type: string, enum: [none, vmaf], default: none }
+        vmafTarget: { type: integer, minimum: 50, maximum: 99 }
+        container: { type: string, enum: [mp4, mkv, webm, mov], default: mp4 }
+        quality: { type: string, enum: [good, better, best], default: better }
+        priority: { type: string, enum: [normal, high], default: normal }
+        sourceS3:
+          $ref: "#/components/schemas/S3FolderSource"
+        sourceGoogleDrive:
+          $ref: "#/components/schemas/GoogleDriveFolderSource"
+        sourceDropbox:
+          deprecated: true
+          description: Deprecated. Requests using Dropbox ingest return 410 Gone.
+          type: object
+          properties:
+            path: { type: string }
+            accessToken: { type: string }
+        outputDestination:
+          type: string
+          enum: [cdn, s3, google-drive]
+          default: cdn
+        outputS3:
+          $ref: "#/components/schemas/S3FolderOutput"
+        outputGoogleDrive:
+          $ref: "#/components/schemas/GoogleDriveOutput"
+        outputDropbox:
+          deprecated: true
+          description: Deprecated. Requests using Dropbox output return 410 Gone.
+          type: object
+          properties:
+            path: { type: string }
+    OnDemandFolderIngestResponse:
+      type: object
+      properties:
+        message: { type: string }
+        jobs:
+          type: array
+          items:
+            type: object
+            properties:
+              jobId: { type: string, format: uuid }
+              fileName: { type: string }
+
+    # Streaming
+    StreamInitResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        uploadId: { type: string }
+        inputKey: { type: string }
+    StreamFinalizeRequest:
+      type: object
+      properties:
+        parts:
+          type: array
+          items:
+            type: object
+            properties:
+              PartNumber: { type: integer }
+              ETag: { type: string }
+security:
+  - BearerAuth: []
+paths:
+  /auth/login:
+    post:
+      summary: Login and receive JWTs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+      responses:
+        "200":
+          description: Tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginResponse"
+  /tokens/balance:
+    get:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Get token balance
+      responses:
+        "200":
+          description: Balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenBalanceResponse"
+  /tokens/reserve:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Reserve tokens for a job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenReserveRequest"
+      responses:
+        "200": { description: Reserved or insufficient }
+  /tokens/release:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Release reserved tokens for a job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenReserveRequest"
+      responses:
+        "200": { description: Released }
+  /tokens/deduct:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Deduct tokens after a job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenDeductRequest"
+      responses:
+        "200": { description: Deducted }
+  /jobs:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Create a new encode job
+      description: Create a job for upload ingest (returns a presigned PUT) or direct URL/S3 ingest.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobCreateRequest"
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobCreateResponse"
+  /jobs/{id}/probe-duration:
+    get:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Probe input duration
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Duration probed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProbeDurationResponse"
+  /jobs/{id}/approve-unified:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Approve, probe, reserve, and return estimate (does not enqueue)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApproveUnifiedRequest"
+      responses:
+        "200":
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApproveUnifiedResponse"
+  /jobs/{id}/confirm:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Confirm job and enqueue (reserves if not already reserved)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmRequest"
+      responses:
+        "200":
+          description: Confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfirmResponse"
+  /jobs/{id}/status:
+    get:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Get status for an authenticated job
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /jobs/{id}/cancel:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Cancel a job (created/queued)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Canceled or no-op }
+
+  /api-keys:
+    get:
+      security: [{ BearerAuth: [] }]
+      summary: List API keys
+      responses:
+        "200":
+          description: List of keys
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyListResponse"
+    post:
+      security: [{ BearerAuth: [] }]
+      summary: Create an API key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiKeyCreateRequest"
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiKeyResponse"
+  /api-keys/{id}:
+    delete:
+      security: [{ BearerAuth: [] }]
+      summary: Revoke an API key
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Revoked }
+
+  /webhooks:
+    get:
+      security: [{ BearerAuth: [] }]
+      summary: List webhooks
+      responses:
+        "200":
+          description: List of webhooks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookListResponse"
+    post:
+      security: [{ BearerAuth: [] }]
+      summary: Create a webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookCreateRequest"
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResponse"
+  /webhooks/{id}:
+    delete:
+      security: [{ BearerAuth: [] }]
+      summary: Delete a webhook
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "204": { description: Deleted }
+    post:
+      security: [{ BearerAuth: [] }]
+      summary: Test a webhook
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { description: Test event sent }
+
+  /jobs/bulk:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Bulk create jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkCreateRequest"
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkCreateResponse"
+  /jobs/bulk/status:
+    get:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Bulk status check
+      parameters:
+        - in: query
+          name: ids
+          required: true
+          schema: { type: string, description: "Comma-separated job IDs" }
+      responses:
+        "200":
+          description: Statuses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkStatusResponse"
+  /jobs/bulk/confirm:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Bulk confirm/enqueue jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkConfirmRequest"
+      responses:
+        "200":
+          description: Confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  queued: { type: integer }
+                  jobs:
+                    type: array
+                    items: { type: object }
+
+  /jobs/{id}/stream/init:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Initialize streaming ingest
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamInitResponse"
+  /jobs/{id}/stream/chunk/{index}:
+    put:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Upload a streaming chunk
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: path
+          name: index
+          required: true
+          schema: { type: integer, minimum: 1, maximum: 10000 }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        "200": { description: Chunk received }
+  /jobs/{id}/stream/finalize:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Finalize streaming and complete upload
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StreamFinalizeRequest"
+      responses:
+        "200": { description: Finalized }
+  /jobs/{id}/stream/abort:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Abort streaming
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { description: Aborted }
+
+  # Public (no auth) limited endpoints
+  /public/jobs:
+    post:
+      summary: Create a public job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codec, resolution, fps]
+              properties:
+                codec: { type: string, enum: [h264, h265, av1] }
+                resolution: { type: string, enum: [480p, 720p] }
+                fps: { type: integer, minimum: 1, maximum: 60 }
+                container: { type: string, enum: [mp4, mkv, mov, webm] }
+                sourceUrl:
+                  {
+                    type: string,
+                    format: uri,
+                    description: Optional direct URL ingest,
+                  }
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobCreateResponse"
+  /public/jobs/{id}/probe-duration:
+    get:
+      summary: Probe duration for public job
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Duration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProbeDurationResponse"
+  /public/jobs/{id}/confirm:
+    post:
+      summary: Confirm and enqueue a public job
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmRequest"
+      responses:
+        "200":
+          description: Confirmed
+  /public/jobs/{id}/status:
+    get:
+      summary: Get status for a public job (tokenized)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: query
+          name: token
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusResponse"
+
+  # On-Demand Encoding API
+  /ondemand/encode:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Submit video for immediate on-demand encoding
+      description: |
+        Simplified API for immediate video encoding. Automatically probes, reserves tokens, 
+        and starts encoding. Premium pricing (1.5x-2x) for on-demand convenience.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnDemandEncodeRequest"
+      responses:
+        "200":
+          description: Job created and queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnDemandEncodeResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "402":
+          description: Insufficient tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "410":
+          description: Deprecated Dropbox destination requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /ondemand/ingest/folder:
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Ingest videos from an S3 or Google Drive folder
+      description: |
+        Crawls an S3 prefix or Google Drive folder, queues one encode job per video file,
+        and optionally delivers outputs to CDN, S3, or Google Drive.
+
+        For API integrations, Google Drive can be used without dashboard OAuth by passing
+        `accessToken` in `sourceGoogleDrive` and/or `outputGoogleDrive`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnDemandFolderIngestRequest"
+      responses:
+        "200":
+          description: Folder jobs queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnDemandFolderIngestResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or expired Google Drive token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No video files found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "410":
+          description: Deprecated Dropbox source or destination requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /ondemand/status/{jobId}:
+    get:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Get on-demand job status and download URL
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Job status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnDemandStatusResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /ondemand/{jobId}:
+    delete:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Cancel on-demand encoding job
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Job canceled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  released: { type: number }
