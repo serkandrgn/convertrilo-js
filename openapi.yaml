@@ -8,6 +8,7 @@ info:
     
     Official TypeScript SDK: https://www.npmjs.com/package/@convertrilo/sdk
     SDK source and examples: https://github.com/serkandrgn/convertrilo-js
+    Interactive docs: https://api.convertrilo.com/docs
 externalDocs:
   description: Convertrilo TypeScript SDK
   url: https://github.com/serkandrgn/convertrilo-js
