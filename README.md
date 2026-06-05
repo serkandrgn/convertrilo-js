@@ -37,6 +37,10 @@ The `examples/` directory contains starter scripts for the main integration path
 Local SDK smoke tests use `.env`, but published SDK users should provide credentials through their
 own server environment. Do not put Convertrilo API keys or customer storage tokens in frontend code.
 
+For a complete server-to-server walkthrough covering URL, S3, folder ingest, Google Drive BYO
+OAuth tokens, polling, and webhooks, see
+[`docs/API-INTEGRATION-GUIDE.md`](docs/API-INTEGRATION-GUIDE.md).
+
 ## URL Source To CDN Output
 
 ```ts
