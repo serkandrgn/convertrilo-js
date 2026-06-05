@@ -5,6 +5,14 @@ info:
   description: |
     JWT-protected API for creating and managing encode jobs. Supports browser-upload, direct URL ingest, or S3 source.
     Public endpoints are limited and rate-limited.
+
+    Swagger auth:
+    1. Create an API key in Dashboard -> Developer.
+    2. Click Authorize in these docs.
+    3. Paste the raw API key into ApiKeyAuth.
+    4. Protected endpoints can then be executed from Swagger.
+
+    API integrations should keep Convertrilo API keys and customer storage/OAuth tokens on the server.
     
     Official TypeScript SDK: https://www.npmjs.com/package/@convertrilo/sdk
     SDK source and examples: https://github.com/serkandrgn/convertrilo-js
@@ -1018,6 +1026,37 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/OnDemandEncodeRequest"
+            examples:
+              urlToCdn:
+                summary: URL source to CDN output
+                value:
+                  sourceUrl: https://example.com/video.mp4
+                  codec: h264
+                  resolution: 1080p
+                  quality: better
+              urlToS3:
+                summary: URL source to S3 output
+                value:
+                  sourceUrl: https://example.com/video.mp4
+                  codec: h264
+                  resolution: 1080p
+                  outputS3:
+                    bucket: customer-output-bucket
+                    key: encoded/video-1080p.mp4
+                    region: us-east-1
+                    accessKeyId: AKIA...
+                    secretAccessKey: replace-with-secret
+              urlToGoogleDrive:
+                summary: URL source to Google Drive output with BYO token
+                value:
+                  sourceUrl: https://example.com/video.mp4
+                  codec: h264
+                  resolution: 1080p
+                  outputGoogleDrive:
+                    folderId: GOOGLE_DRIVE_FOLDER_ID
+                    fileName: video-1080p.mp4
+                    accessToken: ya29...
+                    refreshToken: optional-refresh-token
       responses:
         "200":
           description: Job created and queued
@@ -1065,6 +1104,39 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/OnDemandFolderIngestRequest"
+            examples:
+              s3FolderToS3:
+                summary: S3 folder source to S3 output
+                value:
+                  sourceS3:
+                    bucket: customer-source-bucket
+                    prefix: incoming/
+                    region: us-east-1
+                    accessKeyId: AKIA...
+                    secretAccessKey: replace-with-secret
+                  outputDestination: s3
+                  outputS3:
+                    bucket: customer-output-bucket
+                    prefix: encoded/
+                    region: us-east-1
+                    accessKeyId: AKIA...
+                    secretAccessKey: replace-with-secret
+                  codec: h264
+                  resolution: 1080p
+              googleDriveFolderToGoogleDrive:
+                summary: Google Drive folder source to Google Drive output
+                value:
+                  sourceGoogleDrive:
+                    folderId: SOURCE_FOLDER_ID
+                    accessToken: ya29...
+                    refreshToken: optional-refresh-token
+                  outputDestination: google-drive
+                  outputGoogleDrive:
+                    folderId: OUTPUT_FOLDER_ID
+                    accessToken: ya29...
+                    refreshToken: optional-refresh-token
+                  codec: h264
+                  resolution: 1080p
       responses:
         "200":
           description: Folder jobs queued
