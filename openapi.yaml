@@ -13,8 +13,8 @@ externalDocs:
   description: Convertrilo TypeScript SDK
   url: https://github.com/serkandrgn/convertrilo-js
 servers:
-  - url: http://localhost:3001
-    description: Local backend
+  - url: /
+    description: Same origin as these docs
   - url: https://api.convertrilo.com
     description: Production
 components:
