@@ -5,11 +5,17 @@ info:
   description: |
     JWT-protected API for creating and managing encode jobs. Supports browser-upload, direct URL ingest, or S3 source.
     Public endpoints are limited and rate-limited.
+    
+    Official TypeScript SDK: https://www.npmjs.com/package/@convertrilo/sdk
+    SDK source and examples: https://github.com/serkandrgn/convertrilo-js
+externalDocs:
+  description: Convertrilo TypeScript SDK
+  url: https://github.com/serkandrgn/convertrilo-js
 servers:
   - url: http://localhost:3001
     description: Local backend
-  - url: https://api.example.com
-    description: Production (replace with your deployed base URL)
+  - url: https://api.convertrilo.com
+    description: Production
 components:
   securitySchemes:
     BearerAuth:

@@ -8,10 +8,10 @@
   "homepage": "https://convertrilo.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/convertrilo/convertrilo-js.git"
+    "url": "git+https://github.com/serkandrgn/convertrilo-js.git"
   },
   "bugs": {
-    "url": "https://github.com/convertrilo/convertrilo-js/issues"
+    "url": "https://github.com/serkandrgn/convertrilo-js/issues"
   },
   "keywords": [
     "convertrilo",
