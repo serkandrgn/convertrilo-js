@@ -300,6 +300,24 @@ components:
                 job.failed,
                 job.canceled,
               ]
+    WebhookUpdateRequest:
+      type: object
+      properties:
+        url: { type: string, format: uri }
+        events:
+          type: array
+          items:
+            type: string
+            enum:
+              [
+                job.created,
+                job.queued,
+                job.running,
+                job.completed,
+                job.failed,
+                job.canceled,
+              ]
+        isActive: { type: boolean }
     WebhookResponse:
       type: object
       properties:
@@ -314,6 +332,9 @@ components:
             description: "HMAC secret, only returned on creation",
           }
         isActive: { type: boolean }
+        failureCount: { type: integer }
+        lastTriggeredAt: { type: string, format: date-time, nullable: true }
+        lastFailedAt: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
     WebhookListResponse:
       type: object
@@ -401,7 +422,10 @@ components:
         priority: { type: string, enum: [normal, high], default: normal }
         outputExpiry:
           { type: integer, minimum: 3600, maximum: 604800, default: 86400 }
-        webhook: { type: string, format: uri }
+        webhook:
+          type: string
+          format: uri
+          description: Optional one-off terminal callback URL for this job. Best-effort and unsigned. Use managed webhooks for signed HMAC delivery.
         outputS3:
           $ref: "#/components/schemas/S3Output"
         outputGoogleDrive:
@@ -766,6 +790,7 @@ paths:
     get:
       security: [{ BearerAuth: [] }]
       summary: List webhooks
+      description: List managed webhook subscriptions for the authenticated user. Managed webhook deliveries include HMAC-SHA256 signatures.
       responses:
         "200":
           description: List of webhooks
@@ -776,12 +801,21 @@ paths:
     post:
       security: [{ BearerAuth: [] }]
       summary: Create a webhook
+      description: |
+        Create a managed webhook subscription. The response includes `secret` exactly once.
+        Store it securely and use it to verify `X-Webhook-Signature`.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/WebhookCreateRequest"
+            examples:
+              jobCompletionWebhook:
+                summary: Completion and failure notifications
+                value:
+                  url: https://your-app.com/webhooks/convertrilo
+                  events: [job.completed, job.failed, job.canceled]
       responses:
         "200":
           description: Created
@@ -790,6 +824,36 @@ paths:
               schema:
                 $ref: "#/components/schemas/WebhookResponse"
   /webhooks/{id}:
+    patch:
+      security: [{ BearerAuth: [] }]
+      summary: Update a webhook
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookUpdateRequest"
+            examples:
+              reEnableWebhook:
+                summary: Re-enable a disabled webhook
+                value:
+                  isActive: true
+              changeEvents:
+                summary: Receive only terminal job events
+                value:
+                  events: [job.completed, job.failed, job.canceled]
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookResponse"
     delete:
       security: [{ BearerAuth: [] }]
       summary: Delete a webhook
@@ -803,6 +867,7 @@ paths:
     post:
       security: [{ BearerAuth: [] }]
       summary: Test a webhook
+      description: Sends a `webhook.test` event to the configured URL using the same HMAC signature header as managed deliveries.
       parameters:
         - in: path
           name: id

@@ -563,7 +563,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List webhooks */
+        /**
+         * List webhooks
+         * @description List managed webhook subscriptions for the authenticated user. Managed webhook deliveries include HMAC-SHA256 signatures.
+         */
         get: {
             parameters: {
                 query?: never;
@@ -585,7 +588,11 @@ export interface paths {
             };
         };
         put?: never;
-        /** Create a webhook */
+        /**
+         * Create a webhook
+         * @description Create a managed webhook subscription. The response includes `secret` exactly once.
+         *     Store it securely and use it to verify `X-Webhook-Signature`.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -625,7 +632,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Test a webhook */
+        /**
+         * Test a webhook
+         * @description Sends a `webhook.test` event to the configured URL using the same HMAC signature header as managed deliveries.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -669,7 +679,33 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update a webhook */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["WebhookUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description Updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WebhookResponse"];
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/jobs/bulk": {
@@ -1591,6 +1627,12 @@ export interface components {
             url: string;
             events: ("job.created" | "job.queued" | "job.running" | "job.completed" | "job.failed" | "job.canceled")[];
         };
+        WebhookUpdateRequest: {
+            /** Format: uri */
+            url?: string;
+            events?: ("job.created" | "job.queued" | "job.running" | "job.completed" | "job.failed" | "job.canceled")[];
+            isActive?: boolean;
+        };
         WebhookResponse: {
             /** Format: uuid */
             id?: string;
@@ -1599,6 +1641,11 @@ export interface components {
             /** @description HMAC secret, only returned on creation */
             secret?: string;
             isActive?: boolean;
+            failureCount?: number;
+            /** Format: date-time */
+            lastTriggeredAt?: string | null;
+            /** Format: date-time */
+            lastFailedAt?: string | null;
             /** Format: date-time */
             createdAt?: string;
         };
@@ -1699,7 +1746,10 @@ export interface components {
             priority?: "normal" | "high";
             /** @default 86400 */
             outputExpiry?: number;
-            /** Format: uri */
+            /**
+             * Format: uri
+             * @description Optional one-off terminal callback URL for this job. Best-effort and unsigned. Use managed webhooks for signed HMAC delivery.
+             */
             webhook?: string;
             outputS3?: components["schemas"]["S3Output"];
             outputGoogleDrive?: components["schemas"]["GoogleDriveOutput"];
