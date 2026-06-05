@@ -13,6 +13,8 @@ info:
     4. Protected endpoints can then be executed from Swagger.
 
     API integrations should keep Convertrilo API keys and customer storage/OAuth tokens on the server.
+    For storage integrations, pass customer-owned S3 credentials or Google OAuth access/refresh tokens directly in the API request.
+    Convertrilo does not require your API users to visit the dashboard OAuth flow.
     
     Official TypeScript SDK: https://www.npmjs.com/package/@convertrilo/sdk
     SDK source and examples: https://github.com/serkandrgn/convertrilo-js
@@ -358,49 +360,69 @@ components:
         forcePathStyle: { type: boolean }
     S3FolderSource:
       type: object
+      description: Customer-owned S3-compatible folder source. Credentials should allow listing the prefix and reading objects.
       required: [bucket]
       properties:
         bucket: { type: string }
-        prefix: { type: string, default: "" }
-        endpoint: { type: string, format: uri }
+        prefix:
+          type: string
+          default: ""
+          description: Prefix to crawl. Only files with video extensions are queued.
+        endpoint:
+          type: string
+          format: uri
+          description: Optional S3-compatible endpoint, for example Cloudflare R2, MinIO, or object storage providers.
         region: { type: string }
-        accessKeyId: { type: string }
+        accessKeyId:
+          type: string
+          description: Optional source access key. Omit only when your backend/runtime provides credentials another way.
         secretAccessKey: { type: string, format: password }
         forcePathStyle: { type: boolean, default: true }
     S3FolderOutput:
       type: object
+      description: Customer-owned S3-compatible output destination. Credentials should allow writing encoded objects.
       required: [bucket]
       properties:
         bucket: { type: string }
-        prefix: { type: string, default: outputs/ }
-        endpoint: { type: string, format: uri }
+        prefix:
+          type: string
+          default: outputs/
+          description: Output key prefix. The source file name is appended to this prefix.
+        endpoint:
+          type: string
+          format: uri
+          description: Optional S3-compatible endpoint, for example Cloudflare R2, MinIO, or object storage providers.
         region: { type: string }
-        accessKeyId: { type: string }
+        accessKeyId:
+          type: string
+          description: Optional output access key. Omit only when your backend/runtime provides credentials another way.
         secretAccessKey: { type: string, format: password }
         forcePathStyle: { type: boolean, default: true }
     GoogleDriveFolderSource:
       type: object
+      description: Google Drive folder source for API integrations. Pass a customer-owned OAuth token instead of sending the user through the Convertrilo dashboard.
       required: [folderId]
       properties:
         folderId: { type: string }
         accessToken:
           type: string
-          description: Short-lived Google OAuth access token supplied by the API caller.
+          description: Short-lived Google OAuth access token supplied by the API caller. Must allow reading/listing files in the folder.
         refreshToken:
           type: string
-          description: Optional Google refresh token supplied by the API caller for long-running jobs.
+          description: Optional Google refresh token supplied by the API caller. Recommended for long-running folder jobs so workers can refresh expired access tokens.
     GoogleDriveOutput:
       type: object
+      description: Google Drive output destination for API integrations. Pass a customer-owned OAuth token with upload access to the destination folder.
       required: [folderId]
       properties:
         folderId: { type: string }
         fileName: { type: string }
         accessToken:
           type: string
-          description: Short-lived Google OAuth access token supplied by the API caller.
+          description: Short-lived Google OAuth access token supplied by the API caller. Must allow uploading to the destination folder.
         refreshToken:
           type: string
-          description: Optional Google refresh token supplied by the API caller for long-running jobs.
+          description: Optional Google refresh token supplied by the API caller. Recommended for long-running jobs so workers can refresh expired access tokens.
     OnDemandEncodeRequest:
       type: object
       required: [sourceUrl]
@@ -1161,8 +1183,12 @@ paths:
         Crawls an S3 prefix or Google Drive folder, queues one encode job per video file,
         and optionally delivers outputs to CDN, S3, or Google Drive.
 
-        For API integrations, Google Drive can be used without dashboard OAuth by passing
-        `accessToken` in `sourceGoogleDrive` and/or `outputGoogleDrive`.
+        For API integrations, use bring-your-own credentials:
+        - S3-compatible storage: pass `sourceS3` and/or `outputS3` credentials from your backend.
+        - Google Drive: pass customer OAuth `accessToken` values in `sourceGoogleDrive` and/or `outputGoogleDrive`.
+        - Include `refreshToken` when jobs may outlive a short access token.
+
+        Your users do not need to connect Google Drive inside the Convertrilo dashboard for API usage.
       requestBody:
         required: true
         content:

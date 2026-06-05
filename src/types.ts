@@ -1249,8 +1249,12 @@ export interface paths {
          * @description Crawls an S3 prefix or Google Drive folder, queues one encode job per video file,
          *     and optionally delivers outputs to CDN, S3, or Google Drive.
          *
-         *     For API integrations, Google Drive can be used without dashboard OAuth by passing
-         *     `accessToken` in `sourceGoogleDrive` and/or `outputGoogleDrive`.
+         *     For API integrations, use bring-your-own credentials:
+         *     - S3-compatible storage: pass `sourceS3` and/or `outputS3` credentials from your backend.
+         *     - Google Drive: pass customer OAuth `accessToken` values in `sourceGoogleDrive` and/or `outputGoogleDrive`.
+         *     - Include `refreshToken` when jobs may outlive a short access token.
+         *
+         *     Your users do not need to connect Google Drive inside the Convertrilo dashboard for API usage.
          */
         post: {
             parameters: {
@@ -1663,45 +1667,63 @@ export interface components {
             secretAccessKey?: string;
             forcePathStyle?: boolean;
         };
+        /** @description Customer-owned S3-compatible folder source. Credentials should allow listing the prefix and reading objects. */
         S3FolderSource: {
             bucket: string;
-            /** @default  */
+            /**
+             * @description Prefix to crawl. Only files with video extensions are queued.
+             * @default
+             */
             prefix?: string;
-            /** Format: uri */
+            /**
+             * Format: uri
+             * @description Optional S3-compatible endpoint, for example Cloudflare R2, MinIO, or object storage providers.
+             */
             endpoint?: string;
             region?: string;
+            /** @description Optional source access key. Omit only when your backend/runtime provides credentials another way. */
             accessKeyId?: string;
             /** Format: password */
             secretAccessKey?: string;
             /** @default true */
             forcePathStyle?: boolean;
         };
+        /** @description Customer-owned S3-compatible output destination. Credentials should allow writing encoded objects. */
         S3FolderOutput: {
             bucket: string;
-            /** @default outputs/ */
+            /**
+             * @description Output key prefix. The source file name is appended to this prefix.
+             * @default outputs/
+             */
             prefix?: string;
-            /** Format: uri */
+            /**
+             * Format: uri
+             * @description Optional S3-compatible endpoint, for example Cloudflare R2, MinIO, or object storage providers.
+             */
             endpoint?: string;
             region?: string;
+            /** @description Optional output access key. Omit only when your backend/runtime provides credentials another way. */
             accessKeyId?: string;
             /** Format: password */
             secretAccessKey?: string;
             /** @default true */
             forcePathStyle?: boolean;
         };
+        /** @description Google Drive folder source for API integrations. Pass a customer-owned OAuth token instead of sending the user through the Convertrilo dashboard. */
         GoogleDriveFolderSource: {
             folderId: string;
-            /** @description Short-lived Google OAuth access token supplied by the API caller. */
+            /** @description Short-lived Google OAuth access token supplied by the API caller. Must allow reading/listing files in the folder. */
             accessToken?: string;
-            /** @description Optional Google refresh token supplied by the API caller for long-running jobs. */
+            /** @description Optional Google refresh token supplied by the API caller. Recommended for long-running folder jobs so workers can refresh expired access tokens. */
             refreshToken?: string;
         };
+        /** @description Google Drive output destination for API integrations. Pass a customer-owned OAuth token with upload access to the destination folder. */
         GoogleDriveOutput: {
             folderId: string;
             fileName?: string;
-            /** @description Short-lived Google OAuth access token supplied by the API caller. */
+            /** @description Short-lived Google OAuth access token supplied by the API caller. Must allow uploading to the destination folder. */
             accessToken?: string;
-            /** @description Optional Google refresh token supplied by the API caller for long-running jobs. */
+            /** @description Optional Google refresh token supplied by the API caller. Recommended for long-running jobs so workers can refresh expired access tokens. */
             refreshToken?: string;
         };
         OnDemandEncodeRequest: {
