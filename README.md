@@ -33,6 +33,8 @@ The `examples/` directory contains starter scripts for the main integration path
 - `node-url-to-s3.ts` - encode a public URL and upload the result to S3/S3-compatible storage
 - `google-drive-byo-token.ts` - upload output to Google Drive using customer OAuth tokens from your app
 - `folder-ingest-s3.ts` - queue one encode job per video in an S3 prefix
+- `idempotency.ts` - safely retry `createJob` and `createJobsBulk`
+- `webhook-receiver-hmac.ts` - verify managed webhook HMAC signatures from a Node receiver
 
 Local SDK smoke tests use `.env`, but published SDK users should provide credentials through their
 own server environment. Do not put Convertrilo API keys or customer storage tokens in frontend code.

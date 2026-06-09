@@ -79,6 +79,10 @@ const batch = await client.createJobsBulk({
 });
 ```
 
+API errors include a stable `code` field plus a human-readable `message`. Branch on
+`code` in your backend, for example `idempotency_conflict`, `insufficient_tokens`,
+or `missing_required_scope`.
+
 ## Flow 1: URL Source To CDN Output
 
 Use this when the source video is already available over HTTP(S), and you want Convertrilo to return a signed CDN download URL.

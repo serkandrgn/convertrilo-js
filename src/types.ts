@@ -1643,13 +1643,39 @@ export interface components {
         };
         StatusResponse: {
             id?: string;
+            externalId?: string | null;
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
             status?: string;
+            ingest?: string | null;
+            output?: {
+                key?: string;
+                publicUrl?: string;
+            } | null;
             downloadUrl?: string | null;
             encoder?: string | null;
             pct?: number | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            finishedAt?: string | null;
+            failureMessage?: string | null;
         };
         ErrorResponse: {
-            message?: string;
+            /**
+             * @description Stable machine-readable error code. Branch on this instead of parsing `message`.
+             * @enum {string}
+             */
+            code: "invalid_api_key" | "api_key_expired" | "user_not_found" | "account_banned" | "missing_required_scope" | "invalid_request" | "invalid_body" | "invalid_url" | "url_ingest_disabled" | "url_host_blocked" | "signed_url_required" | "host_not_resolvable" | "private_ip_blocked" | "missing_content_length" | "file_too_large" | "unsupported_content_type" | "probe_failed" | "insufficient_tokens" | "idempotency_conflict" | "idempotency_in_progress" | "not_found" | "forbidden" | "deprecated_dropbox" | "google_drive_not_connected" | "dropbox_not_connected" | "no_video_files_found" | "webhook_limit_exceeded" | "webhook_not_found" | "no_updates_provided" | "output_not_available";
+            message: string;
+            /** @description Validation details for `invalid_body`. */
+            issues?: unknown;
+            requiredScope?: string;
+            required?: number;
+            available?: number;
         };
         BulkCreateRequest: {
             jobs: components["schemas"]["JobCreateRequest"][];
