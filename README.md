@@ -46,6 +46,11 @@ OAuth tokens, polling, and webhooks, see
 ```ts
 const job = await client.onDemandEncode({
   sourceUrl: "https://example.com/input.mp4",
+  externalId: "customer-video-123",
+  metadata: {
+    customerId: "cus_123",
+    workflow: "daily-compression",
+  },
   codec: "h264",
   resolution: "1080p",
   quality: "better",
@@ -117,6 +122,11 @@ Queue one job per video in an S3 prefix:
 
 ```ts
 const batch = await client.onDemandIngestFolder({
+  externalIdPrefix: "batch-2026-06-09",
+  metadata: {
+    customerId: "cus_123",
+    workflow: "folder-compression",
+  },
   sourceS3: {
     bucket: "customer-source-bucket",
     prefix: "incoming/",
@@ -137,7 +147,7 @@ const batch = await client.onDemandIngestFolder({
 });
 
 for (const job of batch.jobs || []) {
-  console.log(job.jobId, job.fileName);
+  console.log(job.jobId, job.externalId, job.fileName);
 }
 ```
 

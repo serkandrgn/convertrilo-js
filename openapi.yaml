@@ -457,6 +457,14 @@ components:
       required: [sourceUrl]
       properties:
         sourceUrl: { type: string, format: uri }
+        externalId:
+          type: string
+          maxLength: 255
+          description: Your stable job identifier for reconciliation in status responses and webhooks.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Integration-owned JSON object returned in status responses and webhooks.
         codec: { type: string, enum: [h264, h265, av1], default: h264 }
         resolution:
           {
@@ -493,6 +501,11 @@ components:
       required: [jobId, status, statusUrl]
       properties:
         jobId: { type: string, format: uuid }
+        externalId: { type: string, nullable: true }
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
         status: { type: string }
         estimatedDuration: { type: integer }
         pricing:
@@ -509,6 +522,11 @@ components:
       type: object
       properties:
         jobId: { type: string, format: uuid }
+        externalId: { type: string, nullable: true }
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
         status: { type: string }
         progress: { type: number, nullable: true }
         encoder: { type: string, nullable: true }
@@ -537,6 +555,14 @@ components:
     OnDemandFolderIngestRequest:
       type: object
       properties:
+        externalIdPrefix:
+          type: string
+          maxLength: 200
+          description: Optional prefix used to generate one externalId per queued file as `${externalIdPrefix}:${fileName}`.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Integration-owned JSON object attached to every queued job and returned in webhooks/status responses.
         codec: { type: string, enum: [h264, h265, av1], default: h264 }
         resolution:
           {
@@ -589,6 +615,7 @@ components:
             type: object
             properties:
               jobId: { type: string, format: uuid }
+              externalId: { type: string, nullable: true }
               fileName: { type: string }
 
     # Streaming
@@ -1173,6 +1200,10 @@ paths:
                 summary: URL source to CDN output
                 value:
                   sourceUrl: https://example.com/video.mp4
+                  externalId: customer-video-123
+                  metadata:
+                    customerId: cus_123
+                    workflow: daily-compression
                   codec: h264
                   resolution: 1080p
                   quality: better
@@ -1254,6 +1285,10 @@ paths:
               s3FolderToS3:
                 summary: S3 folder source to S3 output
                 value:
+                  externalIdPrefix: batch-2026-06-09
+                  metadata:
+                    customerId: cus_123
+                    workflow: folder-compression
                   sourceS3:
                     bucket: customer-source-bucket
                     prefix: incoming/

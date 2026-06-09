@@ -53,6 +53,11 @@ Use this when the source video is already available over HTTP(S), and you want C
 ```ts
 const job = await client.onDemandEncode({
   sourceUrl: "https://example.com/input.mp4",
+  externalId: "customer-video-123",
+  metadata: {
+    customerId: "cus_123",
+    workflow: "daily-compression",
+  },
   codec: "h264",
   resolution: "1080p",
   quality: "better",
@@ -69,6 +74,11 @@ curl https://api.convertrilo.com/ondemand/encode \
   -H "X-API-Key: $CONVERTRILO_API_KEY" \
   -d '{
     "sourceUrl": "https://example.com/input.mp4",
+    "externalId": "customer-video-123",
+    "metadata": {
+      "customerId": "cus_123",
+      "workflow": "daily-compression"
+    },
     "codec": "h264",
     "resolution": "1080p",
     "quality": "better"
@@ -76,6 +86,8 @@ curl https://api.convertrilo.com/ondemand/encode \
 ```
 
 Poll `/ondemand/status/{jobId}` until the job reaches `success`, then read `downloadUrl`.
+
+Use `externalId` and `metadata` to reconcile Convertrilo jobs with your own database. They are returned by status responses and managed webhook payloads.
 
 ## Flow 2: URL Source To S3 Output
 
@@ -110,6 +122,11 @@ Source credentials need permission to list the prefix and read objects. Output c
 
 ```ts
 const batch = await client.onDemandIngestFolder({
+  externalIdPrefix: "batch-2026-06-09",
+  metadata: {
+    customerId: "cus_123",
+    workflow: "folder-compression",
+  },
   sourceS3: {
     bucket: "customer-source-bucket",
     prefix: "incoming/",
@@ -134,9 +151,11 @@ const batch = await client.onDemandIngestFolder({
 });
 
 for (const job of batch.jobs || []) {
-  console.log(job.jobId, job.fileName);
+  console.log(job.jobId, job.externalId, job.fileName);
 }
 ```
+
+For folder ingest, Convertrilo generates each job `externalId` as `${externalIdPrefix}:${fileName}`.
 
 Only files with video extensions are queued. If no video files are found, the API returns `404`.
 

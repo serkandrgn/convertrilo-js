@@ -1813,6 +1813,12 @@ export interface components {
         OnDemandEncodeRequest: {
             /** Format: uri */
             sourceUrl: string;
+            /** @description Your stable job identifier for reconciliation in status responses and webhooks. */
+            externalId?: string;
+            /** @description Integration-owned JSON object returned in status responses and webhooks. */
+            metadata?: {
+                [key: string]: unknown;
+            };
             /**
              * @default h264
              * @enum {string}
@@ -1871,6 +1877,10 @@ export interface components {
         OnDemandEncodeResponse: {
             /** Format: uuid */
             jobId: string;
+            externalId?: string | null;
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
             status: string;
             estimatedDuration?: number;
             pricing?: {
@@ -1886,6 +1896,10 @@ export interface components {
         OnDemandStatusResponse: {
             /** Format: uuid */
             jobId?: string;
+            externalId?: string | null;
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
             status?: string;
             progress?: number | null;
             encoder?: string | null;
@@ -1914,6 +1928,12 @@ export interface components {
             failureMessage?: string | null;
         };
         OnDemandFolderIngestRequest: {
+            /** @description Optional prefix used to generate one externalId per queued file as `${externalIdPrefix}:${fileName}`. */
+            externalIdPrefix?: string;
+            /** @description Integration-owned JSON object attached to every queued job and returned in webhooks/status responses. */
+            metadata?: {
+                [key: string]: unknown;
+            };
             /**
              * @default h264
              * @enum {string}
@@ -1989,6 +2009,7 @@ export interface components {
             jobs?: {
                 /** Format: uuid */
                 jobId?: string;
+                externalId?: string | null;
                 fileName?: string;
             }[];
         };
