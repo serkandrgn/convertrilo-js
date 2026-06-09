@@ -20,6 +20,10 @@ export type ClientConfig = {
   fetchImpl?: typeof fetch;
 };
 
+export type RequestOptions = {
+  idempotencyKey?: string;
+};
+
 export class ConvertriloClient {
   private baseUrl: string;
   private getToken?: () => Promise<string> | string;
@@ -269,24 +273,32 @@ export class ConvertriloClient {
 
   // On-Demand Encoding
   async onDemandEncode(
-    body: paths["/ondemand/encode"]["post"]["requestBody"]["content"]["application/json"]
+    body: paths["/ondemand/encode"]["post"]["requestBody"]["content"]["application/json"],
+    options: RequestOptions = {}
   ) {
     return this.request<
       paths["/ondemand/encode"]["post"]["responses"]["200"]["content"]["application/json"]
     >(`/ondemand/encode`, {
       method: "POST",
       body: JSON.stringify(body),
+      headers: options.idempotencyKey
+        ? { "Idempotency-Key": options.idempotencyKey }
+        : undefined,
     });
   }
 
   async onDemandIngestFolder(
-    body: paths["/ondemand/ingest/folder"]["post"]["requestBody"]["content"]["application/json"]
+    body: paths["/ondemand/ingest/folder"]["post"]["requestBody"]["content"]["application/json"],
+    options: RequestOptions = {}
   ) {
     return this.request<
       paths["/ondemand/ingest/folder"]["post"]["responses"]["200"]["content"]["application/json"]
     >(`/ondemand/ingest/folder`, {
       method: "POST",
       body: JSON.stringify(body),
+      headers: options.idempotencyKey
+        ? { "Idempotency-Key": options.idempotencyKey }
+        : undefined,
     });
   }
 

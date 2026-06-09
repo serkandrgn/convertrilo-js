@@ -37,6 +37,15 @@ components:
       type: apiKey
       in: header
       name: X-API-Key
+  parameters:
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: false
+      schema:
+        type: string
+        maxLength: 255
+      description: Optional key for safely retrying job creation requests. Reusing the same key with the same request body replays the original response; reusing it with a different body returns 409.
   schemas:
     AuthLoginRequest:
       type: object
@@ -1189,6 +1198,9 @@ paths:
       description: |
         Simplified API for immediate video encoding. Automatically probes, reserves tokens, 
         and starts encoding. Premium pricing (1.5x-2x) for on-demand convenience.
+        Send `Idempotency-Key` when retrying from your backend to avoid duplicate jobs.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -1275,6 +1287,9 @@ paths:
         - Include `refreshToken` when jobs may outlive a short access token.
 
         Your users do not need to connect Google Drive inside the Convertrilo dashboard for API usage.
+        Send `Idempotency-Key` when retrying from your backend to avoid duplicate folder batches.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:

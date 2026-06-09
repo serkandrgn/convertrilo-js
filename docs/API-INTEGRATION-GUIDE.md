@@ -61,6 +61,8 @@ const job = await client.onDemandEncode({
   codec: "h264",
   resolution: "1080p",
   quality: "better",
+}, {
+  idempotencyKey: "encode-customer-video-123",
 });
 
 console.log(job.jobId);
@@ -72,6 +74,7 @@ Equivalent curl:
 curl https://api.convertrilo.com/ondemand/encode \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $CONVERTRILO_API_KEY" \
+  -H "Idempotency-Key: encode-customer-video-123" \
   -d '{
     "sourceUrl": "https://example.com/input.mp4",
     "externalId": "customer-video-123",
@@ -88,6 +91,8 @@ curl https://api.convertrilo.com/ondemand/encode \
 Poll `/ondemand/status/{jobId}` until the job reaches `success`, then read `downloadUrl`.
 
 Use `externalId` and `metadata` to reconcile Convertrilo jobs with your own database. They are returned by status responses and managed webhook payloads.
+
+Use `Idempotency-Key` on creation requests that your backend may retry. If the same key and request body are received again, Convertrilo returns the original response instead of queuing another job. If the same key is reused with a different body, the API returns `409`.
 
 ## Flow 2: URL Source To S3 Output
 
@@ -148,6 +153,8 @@ const batch = await client.onDemandIngestFolder({
   },
   codec: "h264",
   resolution: "1080p",
+}, {
+  idempotencyKey: "folder-batch-2026-06-09",
 });
 
 for (const job of batch.jobs || []) {

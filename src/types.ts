@@ -1225,11 +1225,15 @@ export interface paths {
          * Submit video for immediate on-demand encoding
          * @description Simplified API for immediate video encoding. Automatically probes, reserves tokens,
          *     and starts encoding. Premium pricing (1.5x-2x) for on-demand convenience.
+         *     Send `Idempotency-Key` when retrying from your backend to avoid duplicate jobs.
          */
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    /** @description Optional key for safely retrying job creation requests. Reusing the same key with the same request body replays the original response; reusing it with a different body returns 409. */
+                    "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+                };
                 path?: never;
                 cookie?: never;
             };
@@ -1312,11 +1316,15 @@ export interface paths {
          *     - Include `refreshToken` when jobs may outlive a short access token.
          *
          *     Your users do not need to connect Google Drive inside the Convertrilo dashboard for API usage.
+         *     Send `Idempotency-Key` when retrying from your backend to avoid duplicate folder batches.
          */
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    /** @description Optional key for safely retrying job creation requests. Reusing the same key with the same request body replays the original response; reusing it with a different body returns 409. */
+                    "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+                };
                 path?: never;
                 cookie?: never;
             };
@@ -2026,7 +2034,10 @@ export interface components {
         };
     };
     responses: never;
-    parameters: never;
+    parameters: {
+        /** @description Optional key for safely retrying job creation requests. Reusing the same key with the same request body replays the original response; reusing it with a different body returns 409. */
+        IdempotencyKey: string;
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;

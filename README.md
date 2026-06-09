@@ -54,6 +54,8 @@ const job = await client.onDemandEncode({
   codec: "h264",
   resolution: "1080p",
   quality: "better",
+}, {
+  idempotencyKey: "encode-customer-video-123",
 });
 
 let finalStatus;
@@ -144,6 +146,8 @@ const batch = await client.onDemandIngestFolder({
   },
   codec: "h264",
   resolution: "1080p",
+}, {
+  idempotencyKey: "folder-batch-2026-06-09",
 });
 
 for (const job of batch.jobs || []) {
