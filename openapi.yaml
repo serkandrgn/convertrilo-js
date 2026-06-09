@@ -364,6 +364,8 @@ components:
           nullable: true
           description: Network, timeout, or delivery error, truncated to 2048 characters.
         attempt: { type: integer }
+        nextRetryAt: { type: string, format: date-time, nullable: true }
+        retriedAt: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
     WebhookDeliveryListResponse:
       type: object

@@ -127,7 +127,28 @@ export async function POST(req: NextRequest) {
 - A webhook is automatically disabled after 10 consecutive failures
 - Re-enable it with `PATCH /webhooks/{id}` and `{ "isActive": true }`
 
-Current deliveries are best-effort. There is not yet a durable retry queue.
+Failed managed deliveries are scheduled for retry when possible.
+
+Retry schedule:
+
+- Attempt 2: about 1 minute after the failed attempt
+- Attempt 3: about 5 minutes after the failed attempt
+- Attempt 4: about 30 minutes after the failed attempt
+
+Run due retries with:
+
+```bash
+pnpm run webhooks:retry
+```
+
+Use `--limit` to cap one run:
+
+```bash
+pnpm run webhooks:retry -- --limit=50
+```
+
+Schedule this command every minute in production. Webhooks are still disabled after
+10 consecutive failures.
 
 ## Delivery History
 
@@ -153,6 +174,8 @@ The response includes the 50 most recent attempts for that webhook:
       "responseBody": null,
       "error": null,
       "attempt": 1,
+      "nextRetryAt": null,
+      "retriedAt": null,
       "createdAt": "2026-06-09T07:30:00.000Z"
     }
   ]

@@ -1724,6 +1724,10 @@ export interface components {
             error?: string | null;
             attempt?: number;
             /** Format: date-time */
+            nextRetryAt?: string | null;
+            /** Format: date-time */
+            retriedAt?: string | null;
+            /** Format: date-time */
             createdAt?: string;
         };
         WebhookDeliveryListResponse: {
