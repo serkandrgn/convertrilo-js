@@ -839,9 +839,9 @@ paths:
 
   /webhooks:
     get:
-      security: [{ BearerAuth: [] }]
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
       summary: List webhooks
-      description: List managed webhook subscriptions for the authenticated user. Managed webhook deliveries include HMAC-SHA256 signatures.
+      description: List managed webhook subscriptions for the authenticated user. API keys need the `webhooks:manage` scope. Managed webhook deliveries include HMAC-SHA256 signatures.
       responses:
         "200":
           description: List of webhooks
@@ -850,11 +850,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/WebhookListResponse"
     post:
-      security: [{ BearerAuth: [] }]
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
       summary: Create a webhook
       description: |
         Create a managed webhook subscription. The response includes `secret` exactly once.
         Store it securely and use it to verify `X-Webhook-Signature`.
+        API keys need the `webhooks:manage` scope.
       requestBody:
         required: true
         content:
@@ -876,8 +877,9 @@ paths:
                 $ref: "#/components/schemas/WebhookResponse"
   /webhooks/{id}:
     patch:
-      security: [{ BearerAuth: [] }]
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
       summary: Update a webhook
+      description: API keys need the `webhooks:manage` scope.
       parameters:
         - in: path
           name: id
@@ -906,8 +908,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/WebhookResponse"
     delete:
-      security: [{ BearerAuth: [] }]
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
       summary: Delete a webhook
+      description: API keys need the `webhooks:manage` scope.
       parameters:
         - in: path
           name: id
@@ -916,9 +919,9 @@ paths:
       responses:
         "204": { description: Deleted }
     post:
-      security: [{ BearerAuth: [] }]
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
       summary: Test a webhook
-      description: Sends a `webhook.test` event to the configured URL using the same HMAC signature header as managed deliveries.
+      description: Sends a `webhook.test` event to the configured URL using the same HMAC signature header as managed deliveries. API keys need the `webhooks:manage` scope.
       parameters:
         - in: path
           name: id
@@ -928,9 +931,9 @@ paths:
         "200": { description: Test event sent }
   /webhooks/{id}/deliveries:
     get:
-      security: [{ BearerAuth: [] }]
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
       summary: List webhook delivery attempts
-      description: Returns the 50 most recent managed or test delivery attempts for this webhook.
+      description: Returns the 50 most recent managed or test delivery attempts for this webhook. API keys need the `webhooks:manage` scope.
       parameters:
         - in: path
           name: id

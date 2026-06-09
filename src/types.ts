@@ -565,7 +565,7 @@ export interface paths {
         };
         /**
          * List webhooks
-         * @description List managed webhook subscriptions for the authenticated user. Managed webhook deliveries include HMAC-SHA256 signatures.
+         * @description List managed webhook subscriptions for the authenticated user. API keys need the `webhooks:manage` scope. Managed webhook deliveries include HMAC-SHA256 signatures.
          */
         get: {
             parameters: {
@@ -592,6 +592,7 @@ export interface paths {
          * Create a webhook
          * @description Create a managed webhook subscription. The response includes `secret` exactly once.
          *     Store it securely and use it to verify `X-Webhook-Signature`.
+         *     API keys need the `webhooks:manage` scope.
          */
         post: {
             parameters: {
@@ -634,7 +635,7 @@ export interface paths {
         put?: never;
         /**
          * Test a webhook
-         * @description Sends a `webhook.test` event to the configured URL using the same HMAC signature header as managed deliveries.
+         * @description Sends a `webhook.test` event to the configured URL using the same HMAC signature header as managed deliveries. API keys need the `webhooks:manage` scope.
          */
         post: {
             parameters: {
@@ -656,7 +657,10 @@ export interface paths {
                 };
             };
         };
-        /** Delete a webhook */
+        /**
+         * Delete a webhook
+         * @description API keys need the `webhooks:manage` scope.
+         */
         delete: {
             parameters: {
                 query?: never;
@@ -679,7 +683,10 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        /** Update a webhook */
+        /**
+         * Update a webhook
+         * @description API keys need the `webhooks:manage` scope.
+         */
         patch: {
             parameters: {
                 query?: never;
@@ -717,7 +724,7 @@ export interface paths {
         };
         /**
          * List webhook delivery attempts
-         * @description Returns the 50 most recent managed or test delivery attempts for this webhook.
+         * @description Returns the 50 most recent managed or test delivery attempts for this webhook. API keys need the `webhooks:manage` scope.
          */
         get: {
             parameters: {
