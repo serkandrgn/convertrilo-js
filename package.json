@@ -1,6 +1,6 @@
 {
   "name": "@convertrilo/sdk",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "TypeScript client for the Convertrilo video encoding API",
   "private": false,
   "license": "MIT",
