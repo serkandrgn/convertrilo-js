@@ -112,13 +112,17 @@ export class ConvertriloClient {
 
   // Jobs
   async createJob(
-    body: paths["/jobs"]["post"]["requestBody"]["content"]["application/json"]
+    body: paths["/jobs"]["post"]["requestBody"]["content"]["application/json"],
+    options: RequestOptions = {}
   ) {
     return this.request<
       paths["/jobs"]["post"]["responses"]["200"]["content"]["application/json"]
     >(`/jobs`, {
       method: "POST",
       body: JSON.stringify(body),
+      headers: options.idempotencyKey
+        ? { "Idempotency-Key": options.idempotencyKey }
+        : undefined,
     });
   }
   async probeDuration(id: string) {
@@ -153,13 +157,17 @@ export class ConvertriloClient {
 
   // Bulk Jobs
   async createJobsBulk(
-    body: paths["/jobs/bulk"]["post"]["requestBody"]["content"]["application/json"]
+    body: paths["/jobs/bulk"]["post"]["requestBody"]["content"]["application/json"],
+    options: RequestOptions = {}
   ) {
     return this.request<
       paths["/jobs/bulk"]["post"]["responses"]["200"]["content"]["application/json"]
     >(`/jobs/bulk`, {
       method: "POST",
       body: JSON.stringify(body),
+      headers: options.idempotencyKey
+        ? { "Idempotency-Key": options.idempotencyKey }
+        : undefined,
     });
   }
   async bulkStatus(ids: string[]) {

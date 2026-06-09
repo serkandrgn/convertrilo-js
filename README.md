@@ -41,6 +41,38 @@ For a complete server-to-server walkthrough covering URL, S3, folder ingest, Goo
 OAuth tokens, polling, and webhooks, see
 [`docs/API-INTEGRATION-GUIDE.md`](docs/API-INTEGRATION-GUIDE.md).
 
+## Idempotent Job Creation
+
+Use an idempotency key when retrying create calls from your backend. Reusing the same key with the
+same body returns the original response instead of creating duplicate jobs.
+
+```ts
+const job = await client.createJob({
+  externalId: "upload-123",
+  metadata: { customerId: "cus_123" },
+  codec: "h264",
+  resolution: "1080p",
+  fps: 30,
+}, {
+  idempotencyKey: "job-upload-123",
+});
+
+const batch = await client.createJobsBulk({
+  jobs: [
+    {
+      externalId: "batch-42:clip-1",
+      codec: "h264",
+      resolution: "1080p",
+      fps: 30,
+      sourceS3: { bucket: "source", key: "clip-1.mp4" },
+    },
+  ],
+  settings: { confirm: true },
+}, {
+  idempotencyKey: "bulk-batch-42",
+});
+```
+
 ## URL Source To CDN Output
 
 ```ts

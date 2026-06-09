@@ -81,6 +81,14 @@ components:
       type: object
       required: [codec, resolution, fps]
       properties:
+        externalId:
+          type: string
+          maxLength: 255
+          description: Your stable job identifier for reconciliation in status responses and webhooks.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Integration-owned JSON object returned in status responses and webhooks.
         codec:
           type: string
           enum: [h264, h265, av1]
@@ -136,6 +144,14 @@ components:
       required: [jobId, upload, output]
       properties:
         jobId: { type: string }
+        externalId: { type: string, nullable: true }
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+        status:
+          type: string
+          description: Present when the job is auto-confirmed and queued.
         upload:
           nullable: true
           type: object
@@ -151,6 +167,8 @@ components:
           type: object
           properties:
             neu: { type: number }
+            totalNeu: { type: number }
+            reserved: { type: number }
     ProbeDurationResponse:
       type: object
       properties:
@@ -230,6 +248,7 @@ components:
       properties:
         totalJobs: { type: integer }
         totalEstimatedNeu: { type: number }
+        reserved: { type: number }
         jobs:
           type: array
           items:
@@ -237,8 +256,17 @@ components:
             properties:
               index: { type: integer }
               jobId: { type: string, format: uuid }
+              externalId: { type: string, nullable: true }
+              metadata:
+                type: object
+                additionalProperties: true
+                nullable: true
               status: { type: string }
               error: { type: string }
+              estimate:
+                type: object
+                properties:
+                  neu: { type: number }
     BulkStatusResponse:
       type: object
       properties:
@@ -714,7 +742,9 @@ paths:
     post:
       security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
       summary: Create a new encode job
-      description: Create a job for upload ingest (returns a presigned PUT) or direct URL/S3 ingest.
+      description: Create a job for upload ingest (returns a presigned PUT) or direct URL/S3 ingest. Send `Idempotency-Key` when retrying from your backend to avoid duplicate jobs.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:
@@ -993,6 +1023,9 @@ paths:
     post:
       security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
       summary: Bulk create jobs
+      description: Send `Idempotency-Key` when retrying from your backend to avoid duplicate bulk batches, duplicate token reservations, or duplicate queue entries.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
         required: true
         content:

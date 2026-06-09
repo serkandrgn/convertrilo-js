@@ -205,12 +205,15 @@ export interface paths {
         put?: never;
         /**
          * Create a new encode job
-         * @description Create a job for upload ingest (returns a presigned PUT) or direct URL/S3 ingest.
+         * @description Create a job for upload ingest (returns a presigned PUT) or direct URL/S3 ingest. Send `Idempotency-Key` when retrying from your backend to avoid duplicate jobs.
          */
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    /** @description Optional key for safely retrying job creation requests. Reusing the same key with the same request body replays the original response; reusing it with a different body returns 409. */
+                    "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+                };
                 path?: never;
                 cookie?: never;
             };
@@ -774,11 +777,17 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Bulk create jobs */
+        /**
+         * Bulk create jobs
+         * @description Send `Idempotency-Key` when retrying from your backend to avoid duplicate bulk batches, duplicate token reservations, or duplicate queue entries.
+         */
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    /** @description Optional key for safely retrying job creation requests. Reusing the same key with the same request body replays the original response; reusing it with a different body returns 409. */
+                    "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+                };
                 path?: never;
                 cookie?: never;
             };
@@ -1506,6 +1515,12 @@ export interface components {
             amount: number;
         };
         JobCreateRequest: {
+            /** @description Your stable job identifier for reconciliation in status responses and webhooks. */
+            externalId?: string;
+            /** @description Integration-owned JSON object returned in status responses and webhooks. */
+            metadata?: {
+                [key: string]: unknown;
+            };
             /** @enum {string} */
             codec: "h264" | "h265" | "av1";
             /** @enum {string} */
@@ -1560,6 +1575,12 @@ export interface components {
         };
         JobCreateResponse: {
             jobId: string;
+            externalId?: string | null;
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+            /** @description Present when the job is auto-confirmed and queued. */
+            status?: string;
             upload: {
                 url?: string;
                 key?: string;
@@ -1570,6 +1591,8 @@ export interface components {
             };
             estimate?: {
                 neu?: number;
+                totalNeu?: number;
+                reserved?: number;
             };
         };
         ProbeDurationResponse: {
@@ -1649,12 +1672,20 @@ export interface components {
         BulkCreateResponse: {
             totalJobs?: number;
             totalEstimatedNeu?: number;
+            reserved?: number;
             jobs?: {
                 index?: number;
                 /** Format: uuid */
                 jobId?: string;
+                externalId?: string | null;
+                metadata?: {
+                    [key: string]: unknown;
+                } | null;
                 status?: string;
                 error?: string;
+                estimate?: {
+                    neu?: number;
+                };
             }[];
         };
         BulkStatusResponse: {

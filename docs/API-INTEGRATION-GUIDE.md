@@ -46,6 +46,39 @@ const client = new ConvertriloClient({
 
 SDK source and examples: https://github.com/serkandrgn/convertrilo-js
 
+## Idempotency
+
+When your backend retries `POST /jobs`, `POST /jobs/bulk`, `POST /ondemand/encode`, or
+`POST /ondemand/ingest/folder`, send an idempotency key. The API replays the original response for
+the same key and body, and returns `409` if the key is reused with a different body.
+
+```ts
+const job = await client.createJob({
+  externalId: "upload-123",
+  metadata: { customerId: "cus_123" },
+  codec: "h264",
+  resolution: "1080p",
+  fps: 30,
+}, {
+  idempotencyKey: "job-upload-123",
+});
+
+const batch = await client.createJobsBulk({
+  jobs: [
+    {
+      externalId: "batch-42:clip-1",
+      codec: "h264",
+      resolution: "1080p",
+      fps: 30,
+      sourceS3: { bucket: "source", key: "clip-1.mp4" },
+    },
+  ],
+  settings: { confirm: true },
+}, {
+  idempotencyKey: "bulk-batch-42",
+});
+```
+
 ## Flow 1: URL Source To CDN Output
 
 Use this when the source video is already available over HTTP(S), and you want Convertrilo to return a signed CDN download URL.
