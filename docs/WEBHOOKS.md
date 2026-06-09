@@ -127,7 +127,39 @@ export async function POST(req: NextRequest) {
 - A webhook is automatically disabled after 10 consecutive failures
 - Re-enable it with `PATCH /webhooks/{id}` and `{ "isActive": true }`
 
-Current deliveries are best-effort. There is not yet a durable retry queue or delivery history API.
+Current deliveries are best-effort. There is not yet a durable retry queue.
+
+## Delivery History
+
+Recent managed and test delivery attempts are available with:
+
+```txt
+GET /webhooks/{id}/deliveries
+```
+
+The response includes the 50 most recent attempts for that webhook:
+
+```json
+{
+  "deliveries": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "webhookId": "4a5c26a0-7b04-4d37-8bb1-446655440000",
+      "event": "job.completed",
+      "jobId": "9db109f6-6a88-49d7-89e2-446655440000",
+      "status": "success",
+      "statusCode": 204,
+      "durationMs": 182,
+      "responseBody": null,
+      "error": null,
+      "attempt": 1,
+      "createdAt": "2026-06-09T07:30:00.000Z"
+    }
+  ]
+}
+```
+
+`responseBody` and `error` are capped at 2048 characters.
 
 ## One-Off On-Demand Webhook URL
 

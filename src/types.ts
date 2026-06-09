@@ -708,6 +708,56 @@ export interface paths {
         };
         trace?: never;
     };
+    "/webhooks/{id}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List webhook delivery attempts
+         * @description Returns the 50 most recent managed or test delivery attempts for this webhook.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Recent delivery attempts */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["WebhookDeliveryListResponse"];
+                    };
+                };
+                /** @description Webhook not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/jobs/bulk": {
         parameters: {
             query?: never;
@@ -1655,6 +1705,29 @@ export interface components {
         };
         WebhookListResponse: {
             webhooks?: components["schemas"]["WebhookResponse"][];
+        };
+        WebhookDeliveryResponse: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            webhookId?: string;
+            event?: string;
+            /** Format: uuid */
+            jobId?: string | null;
+            /** @enum {string} */
+            status?: "success" | "failed";
+            statusCode?: number | null;
+            durationMs?: number | null;
+            /** @description Response body captured from the receiver, truncated to 2048 characters. */
+            responseBody?: string | null;
+            /** @description Network, timeout, or delivery error, truncated to 2048 characters. */
+            error?: string | null;
+            attempt?: number;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        WebhookDeliveryListResponse: {
+            deliveries?: components["schemas"]["WebhookDeliveryResponse"][];
         };
         S3Output: {
             bucket: string;

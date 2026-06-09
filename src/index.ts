@@ -210,11 +210,27 @@ export class ConvertriloClient {
       body: JSON.stringify(body),
     });
   }
+  async updateWebhook(
+    id: string,
+    body: paths["/webhooks/{id}"]["patch"]["requestBody"]["content"]["application/json"]
+  ) {
+    return this.request<
+      paths["/webhooks/{id}"]["patch"]["responses"]["200"]["content"]["application/json"]
+    >(`/webhooks/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  }
   async deleteWebhook(id: string) {
     return this.request(`/webhooks/${id}`, { method: "DELETE" });
   }
   async testWebhook(id: string) {
     return this.request(`/webhooks/${id}/test`, { method: "POST" });
+  }
+  async getWebhookDeliveries(id: string) {
+    return this.request<
+      paths["/webhooks/{id}/deliveries"]["get"]["responses"]["200"]["content"]["application/json"]
+    >(`/webhooks/${id}/deliveries`);
   }
 
   // Streaming

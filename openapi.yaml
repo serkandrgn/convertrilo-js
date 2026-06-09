@@ -345,6 +345,33 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/WebhookResponse"
+    WebhookDeliveryResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        webhookId: { type: string, format: uuid }
+        event: { type: string }
+        jobId: { type: string, format: uuid, nullable: true }
+        status: { type: string, enum: [success, failed] }
+        statusCode: { type: integer, nullable: true }
+        durationMs: { type: integer, nullable: true }
+        responseBody:
+          type: string
+          nullable: true
+          description: Response body captured from the receiver, truncated to 2048 characters.
+        error:
+          type: string
+          nullable: true
+          description: Network, timeout, or delivery error, truncated to 2048 characters.
+        attempt: { type: integer }
+        createdAt: { type: string, format: date-time }
+    WebhookDeliveryListResponse:
+      type: object
+      properties:
+        deliveries:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookDeliveryResponse"
 
     # On-Demand Encoding
     S3Output:
@@ -897,6 +924,29 @@ paths:
           schema: { type: string, format: uuid }
       responses:
         "200": { description: Test event sent }
+  /webhooks/{id}/deliveries:
+    get:
+      security: [{ BearerAuth: [] }]
+      summary: List webhook delivery attempts
+      description: Returns the 50 most recent managed or test delivery attempts for this webhook.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Recent delivery attempts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookDeliveryListResponse"
+        "404":
+          description: Webhook not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /jobs/bulk:
     post:

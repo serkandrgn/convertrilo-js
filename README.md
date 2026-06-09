@@ -167,6 +167,19 @@ for (const job of batch.jobs || []) {
 
 Poll each returned `jobId` with `client.onDemandStatus(jobId)`.
 
+## Webhook Delivery History
+
+Managed webhooks are HMAC signed. You can test a webhook and inspect recent delivery attempts:
+
+```ts
+await client.testWebhook(webhookId);
+
+const history = await client.getWebhookDeliveries(webhookId);
+for (const delivery of history.deliveries || []) {
+  console.log(delivery.status, delivery.statusCode, delivery.event);
+}
+```
+
 ## Regenerate Types
 
 The SDK types are generated from `openapi.yaml`.
