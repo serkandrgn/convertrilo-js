@@ -1,6 +1,6 @@
 {
   "name": "@convertrilo/sdk",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "TypeScript client for the Convertrilo video encoding API",
   "private": false,
   "license": "MIT",
@@ -35,6 +35,7 @@
   "files": [
     "dist/src",
     "examples",
+    "docs",
     "openapi.yaml",
     "README.md",
     "LICENSE"

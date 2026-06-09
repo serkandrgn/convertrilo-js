@@ -203,7 +203,7 @@ async function waitForOnDemandJob(jobId: string) {
 }
 ```
 
-For production workflows, prefer managed webhooks. Managed webhooks are HMAC signed and are better for async pipelines. See `docs/WEBHOOKS.md`.
+For production workflows, prefer managed webhooks. Managed webhooks are HMAC signed and are better for async pipelines. See [WEBHOOKS.md](WEBHOOKS.md).
 
 ## Error Handling
 
