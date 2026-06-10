@@ -232,6 +232,15 @@ export interface paths {
                         "application/json": components["schemas"]["JobCreateResponse"];
                     };
                 };
+                /** @description Rate limit exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -410,6 +419,15 @@ export interface paths {
                 };
                 /** @description Not found */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Rate limit exceeded */
+                429: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -804,6 +822,15 @@ export interface paths {
                     };
                     content: {
                         "application/json": components["schemas"]["BulkCreateResponse"];
+                    };
+                };
+                /** @description Rate limit exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
                     };
                 };
             };
@@ -1297,6 +1324,15 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorResponse"];
                     };
                 };
+                /** @description Rate limit exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -1388,6 +1424,15 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorResponse"];
                     };
                 };
+                /** @description Rate limit exceeded */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -1426,6 +1471,15 @@ export interface paths {
                 };
                 /** @description Not found */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+                /** @description Rate limit exceeded */
+                429: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1669,7 +1723,7 @@ export interface components {
              * @description Stable machine-readable error code. Branch on this instead of parsing `message`.
              * @enum {string}
              */
-            code: "invalid_api_key" | "api_key_expired" | "user_not_found" | "account_banned" | "missing_required_scope" | "invalid_request" | "invalid_body" | "invalid_url" | "url_ingest_disabled" | "url_host_blocked" | "signed_url_required" | "host_not_resolvable" | "private_ip_blocked" | "missing_content_length" | "file_too_large" | "unsupported_content_type" | "probe_failed" | "insufficient_tokens" | "idempotency_conflict" | "idempotency_in_progress" | "not_found" | "forbidden" | "deprecated_dropbox" | "google_drive_not_connected" | "dropbox_not_connected" | "no_video_files_found" | "webhook_limit_exceeded" | "webhook_not_found" | "no_updates_provided" | "output_not_available";
+            code: "invalid_api_key" | "api_key_expired" | "user_not_found" | "account_banned" | "missing_required_scope" | "invalid_request" | "invalid_body" | "invalid_url" | "url_ingest_disabled" | "url_host_blocked" | "signed_url_required" | "host_not_resolvable" | "private_ip_blocked" | "missing_content_length" | "file_too_large" | "unsupported_content_type" | "probe_failed" | "insufficient_tokens" | "idempotency_conflict" | "idempotency_in_progress" | "rate_limit_exceeded" | "not_found" | "forbidden" | "deprecated_dropbox" | "google_drive_not_connected" | "dropbox_not_connected" | "no_video_files_found" | "webhook_limit_exceeded" | "webhook_not_found" | "no_updates_provided" | "output_not_available";
             message: string;
             /** @description Validation details for `invalid_body`. */
             issues?: unknown;
@@ -2044,6 +2098,8 @@ export interface components {
              * @enum {string}
              */
             priority?: "normal" | "high";
+            /** @description Optional cap on the number of discovered video files to queue from the folder. */
+            maxFiles?: number;
             sourceS3?: components["schemas"]["S3FolderSource"];
             sourceGoogleDrive?: components["schemas"]["GoogleDriveFolderSource"];
             /**

@@ -262,6 +262,7 @@ components:
             - insufficient_tokens
             - idempotency_conflict
             - idempotency_in_progress
+            - rate_limit_exceeded
             - not_found
             - forbidden
             - deprecated_dropbox
@@ -673,6 +674,11 @@ components:
         container: { type: string, enum: [mp4, mkv, webm, mov], default: mp4 }
         quality: { type: string, enum: [good, better, best], default: better }
         priority: { type: string, enum: [normal, high], default: normal }
+        maxFiles:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Optional cap on the number of discovered video files to queue from the folder.
         sourceS3:
           $ref: "#/components/schemas/S3FolderSource"
         sourceGoogleDrive:
@@ -814,6 +820,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/JobCreateResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /jobs/{id}/probe-duration:
     get:
       security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
@@ -904,6 +916,12 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
           content:
             application/json:
               schema:
@@ -1095,6 +1113,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BulkCreateResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /jobs/bulk/status:
     get:
       security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
@@ -1362,6 +1386,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /ondemand/ingest/folder:
     post:
       security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
@@ -1453,6 +1483,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /ondemand/status/{jobId}:
     get:
       security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
@@ -1471,6 +1507,12 @@ paths:
                 $ref: "#/components/schemas/OnDemandStatusResponse"
         "404":
           description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Rate limit exceeded
           content:
             application/json:
               schema:
