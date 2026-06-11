@@ -126,6 +126,9 @@ components:
           type: string
           format: uri
           description: Optional direct HTTP(S) ingest. When provided, upload URL is not returned.
+        originalFilename:
+          type: string
+          description: Optional source filename used to generate human-readable output download names.
         sourceS3:
           type: object
           properties:
@@ -149,6 +152,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+        sourceFilename: { type: string, nullable: true }
+        outputFilename: { type: string, nullable: true }
         status:
           type: string
           description: Present when the job is auto-confirmed and queued.
@@ -219,6 +224,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+        sourceFilename: { type: string, nullable: true }
+        outputFilename: { type: string, nullable: true }
         status: { type: string }
         ingest: { type: string, nullable: true }
         output:
@@ -622,6 +629,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+        sourceFilename: { type: string, nullable: true }
+        outputFilename: { type: string, nullable: true }
         status: { type: string }
         estimatedDuration: { type: integer }
         pricing:
@@ -643,6 +652,8 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+        sourceFilename: { type: string, nullable: true }
+        outputFilename: { type: string, nullable: true }
         status: { type: string }
         progress: { type: number, nullable: true }
         encoder: { type: string, nullable: true }

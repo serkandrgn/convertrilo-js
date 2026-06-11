@@ -1612,6 +1612,8 @@ export interface components {
              * @description Optional direct HTTP(S) ingest. When provided, upload URL is not returned.
              */
             sourceUrl?: string;
+            /** @description Optional source filename used to generate human-readable output download names. */
+            originalFilename?: string;
             sourceS3?: {
                 bucket?: string;
                 key?: string;
@@ -1633,6 +1635,8 @@ export interface components {
             metadata?: {
                 [key: string]: unknown;
             } | null;
+            sourceFilename?: string | null;
+            outputFilename?: string | null;
             /** @description Present when the job is auto-confirmed and queued. */
             status?: string;
             upload: {
@@ -1701,6 +1705,8 @@ export interface components {
             metadata?: {
                 [key: string]: unknown;
             } | null;
+            sourceFilename?: string | null;
+            outputFilename?: string | null;
             status?: string;
             ingest?: string | null;
             output?: {
@@ -2005,6 +2011,8 @@ export interface components {
             metadata?: {
                 [key: string]: unknown;
             } | null;
+            sourceFilename?: string | null;
+            outputFilename?: string | null;
             status: string;
             estimatedDuration?: number;
             pricing?: {
@@ -2024,6 +2032,8 @@ export interface components {
             metadata?: {
                 [key: string]: unknown;
             } | null;
+            sourceFilename?: string | null;
+            outputFilename?: string | null;
             status?: string;
             progress?: number | null;
             encoder?: string | null;
