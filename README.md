@@ -179,6 +179,7 @@ const batch = await client.onDemandIngestFolder({
     secretAccessKey: process.env.CUSTOMER_S3_SECRET_ACCESS_KEY,
   },
   codec: "h264",
+  maxFiles: 25,
   resolution: "1080p",
 }, {
   idempotencyKey: "folder-batch-2026-06-09",
@@ -189,6 +190,8 @@ for (const job of batch.jobs || []) {
 }
 ```
 
+Use `maxFiles` to cap how many discovered videos are queued from a folder.
+
 Queue one job per video in a Google Drive folder:
 
 ```ts
@@ -196,15 +199,14 @@ const batch = await client.onDemandIngestFolder({
   sourceGoogleDrive: {
     folderId: "SOURCE_FOLDER_ID",
     accessToken: customerGoogleAccessToken,
-    refreshToken: customerGoogleRefreshToken,
   },
   outputDestination: "google-drive",
   outputGoogleDrive: {
     folderId: "OUTPUT_FOLDER_ID",
     accessToken: customerGoogleAccessToken,
-    refreshToken: customerGoogleRefreshToken,
   },
   codec: "h264",
+  maxFiles: 25,
   resolution: "1080p",
 });
 
@@ -212,6 +214,8 @@ for (const job of batch.jobs || []) {
   console.log(job.jobId, job.fileName);
 }
 ```
+
+For BYO OAuth, refresh Google tokens in your own backend and pass a current `accessToken` to Convertrilo.
 
 Poll each returned `jobId` with `client.onDemandStatus(jobId)`.
 

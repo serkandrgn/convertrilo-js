@@ -189,6 +189,7 @@ const batch = await client.onDemandIngestFolder({
     forcePathStyle: true,
   },
   codec: "h264",
+  maxFiles: 25,
   resolution: "1080p",
 }, {
   idempotencyKey: "folder-batch-2026-06-09",
@@ -201,13 +202,13 @@ for (const job of batch.jobs || []) {
 
 For folder ingest, Convertrilo generates each job `externalId` as `${externalIdPrefix}:${fileName}`.
 
-Only files with video extensions are queued. If no video files are found, the API returns `404`.
+Only files with video extensions are queued. Use `maxFiles` to cap how many discovered videos are queued from a folder. If no video files are found, the API returns `404`.
 
 ## Flow 4: Google Drive With BYO OAuth Tokens
 
 Use this when your app already owns the customer relationship and can run Google OAuth itself.
 
-Do not send customers to the Convertrilo dashboard OAuth flow for API usage. Your app should request the Google scopes it needs, store tokens on your backend, and pass those tokens to Convertrilo per request.
+Do not send customers to the Convertrilo dashboard OAuth flow for API usage. Your app should request the Google scopes it needs, store refresh tokens on your backend, refresh them with your own Google OAuth client, and pass a fresh access token to Convertrilo per request.
 
 For output-only jobs:
 
@@ -220,7 +221,6 @@ const job = await client.onDemandEncode({
     folderId: "GOOGLE_DRIVE_OUTPUT_FOLDER_ID",
     fileName: "input-1080p.mp4",
     accessToken: customerGoogleAccessToken,
-    refreshToken: customerGoogleRefreshToken,
   },
 });
 ```
@@ -232,20 +232,18 @@ const batch = await client.onDemandIngestFolder({
   sourceGoogleDrive: {
     folderId: "SOURCE_FOLDER_ID",
     accessToken: customerGoogleAccessToken,
-    refreshToken: customerGoogleRefreshToken,
   },
   outputDestination: "google-drive",
   outputGoogleDrive: {
     folderId: "OUTPUT_FOLDER_ID",
     accessToken: customerGoogleAccessToken,
-    refreshToken: customerGoogleRefreshToken,
   },
   codec: "h264",
   resolution: "1080p",
 });
 ```
 
-Include `refreshToken` when jobs may outlive a short-lived access token. Without a valid access token or refresh token, Google Drive folder ingest returns `401`.
+For BYO OAuth, treat Convertrilo as an access-token consumer, not the owner of your Google OAuth refresh flow. Google refresh tokens are bound to the OAuth client that created them, so your backend should refresh customer tokens itself and send a current `accessToken`. Without a valid access token, Google Drive folder ingest returns `401`.
 
 ## Tracking Completion
 

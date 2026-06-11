@@ -30,6 +30,7 @@ async function main() {
       forcePathStyle: process.env.CUSTOMER_S3_FORCE_PATH_STYLE === "true",
     },
     codec: "h264",
+    maxFiles: Number(process.env.CONVERTRILO_SMOKE_MAX_FOLDER_JOBS || 25),
     resolution: "1080p",
   });
 
