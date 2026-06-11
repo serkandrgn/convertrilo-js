@@ -28,6 +28,8 @@ Use API keys with the minimum scopes needed by your integration. Most encode int
 - `jobs:create`
 - `jobs:read`
 - `jobs:cancel` if you expose cancellation
+- `credentials:manage` only if your backend manages saved S3 credentials via
+  the credential-management endpoints
 
 ## TypeScript SDK
 

@@ -355,7 +355,20 @@ components:
         name: { type: string }
         scopes:
           type: array
-          items: { type: string }
+          description: |
+            Requested API key scopes. Use the minimum scopes needed:
+            `jobs:create`, `jobs:read`, `jobs:cancel`, `tokens:read`,
+            `webhooks:manage`, and `credentials:manage` for saved S3 credential management.
+          items:
+            type: string
+            enum:
+              - jobs:create
+              - jobs:read
+              - jobs:cancel
+              - tokens:read
+              - tokens:write
+              - webhooks:manage
+              - credentials:manage
         expiresInDays: { type: integer, minimum: 1, maximum: 365 }
     ApiKeyResponse:
       type: object
@@ -366,7 +379,16 @@ components:
         prefix: { type: string }
         scopes:
           type: array
-          items: { type: string }
+          items:
+            type: string
+            enum:
+              - jobs:create
+              - jobs:read
+              - jobs:cancel
+              - tokens:read
+              - tokens:write
+              - webhooks:manage
+              - credentials:manage
         expiresAt: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
     ApiKeyListResponse:

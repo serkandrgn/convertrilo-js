@@ -1783,7 +1783,12 @@ export interface components {
         };
         ApiKeyCreateRequest: {
             name: string;
-            scopes?: string[];
+            /**
+             * @description Requested API key scopes. Use the minimum scopes needed:
+             *     `jobs:create`, `jobs:read`, `jobs:cancel`, `tokens:read`,
+             *     `webhooks:manage`, and `credentials:manage` for saved S3 credential management.
+             */
+            scopes?: ("jobs:create" | "jobs:read" | "jobs:cancel" | "tokens:read" | "tokens:write" | "webhooks:manage" | "credentials:manage")[];
             expiresInDays?: number;
         };
         ApiKeyResponse: {
@@ -1793,7 +1798,7 @@ export interface components {
             /** @description Raw key, only returned on creation */
             key?: string;
             prefix?: string;
-            scopes?: string[];
+            scopes?: ("jobs:create" | "jobs:read" | "jobs:cancel" | "tokens:read" | "tokens:write" | "webhooks:manage" | "credentials:manage")[];
             /** Format: date-time */
             expiresAt?: string | null;
             /** Format: date-time */
