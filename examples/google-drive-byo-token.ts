@@ -9,6 +9,13 @@ const client = new ConvertriloClient({
 });
 
 async function main() {
+  const credential = await client.createGoogleDriveCredential({
+    name: "LMS Google Drive",
+    serviceAccount: JSON.parse(
+      requireEnv("CUSTOMER_GOOGLE_SERVICE_ACCOUNT_JSON"),
+    ),
+  });
+
   const job = await client.onDemandEncode({
     sourceUrl: "https://example.com/input.mp4",
     codec: "h264",
@@ -16,13 +23,14 @@ async function main() {
     outputGoogleDrive: {
       folderId: requireEnv("GOOGLE_DRIVE_OUTPUT_FOLDER_ID"),
       fileName: "input-1080p.mp4",
-      accessToken: requireEnv("CUSTOMER_GOOGLE_ACCESS_TOKEN"),
-      refreshToken: process.env.CUSTOMER_GOOGLE_REFRESH_TOKEN,
+      credentialId: credential.id!,
     },
   });
 
   console.log(`Queued job ${job.jobId}`);
-  console.log("The customer authorizes Google in your app; your backend passes the token here.");
+  console.log(
+    `Share the Drive folder with ${credential.clientEmail} before queueing jobs.`,
+  );
 }
 
 function requireEnv(name: string) {

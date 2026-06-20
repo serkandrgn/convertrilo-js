@@ -12,9 +12,9 @@ info:
     3. Paste the raw API key into ApiKeyAuth.
     4. Protected endpoints can then be executed from Swagger.
 
-    API integrations should keep Convertrilo API keys and customer storage/OAuth tokens on the server.
-    For storage integrations, pass customer-owned S3 credentials or Google OAuth access/refresh tokens directly in the API request.
-    Convertrilo does not require your API users to visit the dashboard OAuth flow.
+    API integrations should keep Convertrilo API keys and customer storage credentials on the server.
+    Google Drive folder automation uses encrypted customer-owned service-account credentials.
+    Dashboard Google Drive access is separate and uses Google Picker with the drive.file scope.
     
     Official TypeScript SDK: https://www.npmjs.com/package/@convertrilo/sdk
     SDK source and examples: https://github.com/serkandrgn/convertrilo-js
@@ -365,7 +365,7 @@ components:
           description: |
             Requested API key scopes. Use the minimum scopes needed:
             `jobs:create`, `jobs:read`, `jobs:cancel`, `tokens:read`,
-            `webhooks:manage`, and `credentials:manage` for saved S3 credential management.
+            `webhooks:manage`, and `credentials:manage` for saved storage credential management.
           items:
             type: string
             enum:
@@ -552,29 +552,45 @@ components:
         forcePathStyle: { type: boolean, default: true }
     GoogleDriveFolderSource:
       type: object
-      description: Google Drive folder source for API integrations. Pass a customer-owned OAuth token instead of sending the user through the Convertrilo dashboard.
-      required: [folderId]
+      description: Google Drive folder source for headless API integrations. The saved service account must have Reader access to the folder.
+      required: [folderId, credentialId]
       properties:
         folderId: { type: string }
-        accessToken:
-          type: string
-          description: Short-lived Google OAuth access token supplied by the API caller. Must allow reading/listing files in the folder.
-        refreshToken:
-          type: string
-          description: Optional Google refresh token supplied by the API caller. Recommended for long-running folder jobs so workers can refresh expired access tokens.
+        credentialId: { type: string, format: uuid }
+    GoogleDriveSelectedFile:
+      type: object
+      required: [fileId, fileName]
+      properties:
+        fileId: { type: string }
+        fileName: { type: string }
+        mimeType: { type: string }
     GoogleDriveOutput:
       type: object
-      description: Google Drive output destination for API integrations. Pass a customer-owned OAuth token with upload access to the destination folder.
+      description: Google Drive output destination. SDK callers provide a saved service-account credential ID; dashboard callers use their connected drive.file grant.
       required: [folderId]
       properties:
         folderId: { type: string }
         fileName: { type: string }
-        accessToken:
-          type: string
-          description: Short-lived Google OAuth access token supplied by the API caller. Must allow uploading to the destination folder.
-        refreshToken:
-          type: string
-          description: Optional Google refresh token supplied by the API caller. Recommended for long-running jobs so workers can refresh expired access tokens.
+        credentialId: { type: string, format: uuid }
+    GoogleDriveCredentialCreate:
+      type: object
+      required: [name, serviceAccount]
+      properties:
+        name: { type: string }
+        serviceAccount:
+          oneOf:
+            - type: string
+              description: Raw Google service-account JSON.
+            - type: object
+              additionalProperties: true
+    GoogleDriveCredential:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        clientEmail: { type: string }
+        projectId: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
     OnDemandEncodeRequest:
       type: object
       required: [sourceUrl]
@@ -716,6 +732,12 @@ components:
           $ref: "#/components/schemas/S3FolderSource"
         sourceGoogleDrive:
           $ref: "#/components/schemas/GoogleDriveFolderSource"
+        sourceGoogleDriveFiles:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            $ref: "#/components/schemas/GoogleDriveSelectedFile"
         sourceDropbox:
           deprecated: true
           description: Deprecated. Requests using Dropbox ingest return 410 Gone.
@@ -1337,6 +1359,50 @@ paths:
                 $ref: "#/components/schemas/StatusResponse"
 
   # On-Demand Encoding API
+  /ondemand/credentials/google-drive:
+    get:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: List saved Google Drive service-account credentials
+      responses:
+        "200":
+          description: Credential metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credentials:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/GoogleDriveCredential"
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Save an encrypted Google Drive service-account credential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleDriveCredentialCreate"
+      responses:
+        "201":
+          description: Credential saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleDriveCredential"
+  /ondemand/credentials/google-drive/{id}:
+    delete:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Delete a Google Drive service-account credential
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Credential deleted
   /ondemand/encode:
     post:
       security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
@@ -1378,7 +1444,7 @@ paths:
                     accessKeyId: AKIA...
                     secretAccessKey: replace-with-secret
               urlToGoogleDrive:
-                summary: URL source to Google Drive output with BYO token
+                summary: URL source to Google Drive output with a saved service account
                 value:
                   sourceUrl: https://example.com/video.mp4
                   codec: h264
@@ -1386,8 +1452,7 @@ paths:
                   outputGoogleDrive:
                     folderId: GOOGLE_DRIVE_FOLDER_ID
                     fileName: video-1080p.mp4
-                    accessToken: ya29...
-                    refreshToken: optional-refresh-token
+                    credentialId: 11111111-1111-4111-8111-111111111111
       responses:
         "200":
           description: Job created and queued
@@ -1435,10 +1500,8 @@ paths:
 
         For API integrations, use bring-your-own credentials:
         - S3-compatible storage: pass `sourceS3` and/or `outputS3` credentials from your backend.
-        - Google Drive: pass customer OAuth `accessToken` values in `sourceGoogleDrive` and/or `outputGoogleDrive`.
-        - Include `refreshToken` when jobs may outlive a short access token.
-
-        Your users do not need to connect Google Drive inside the Convertrilo dashboard for API usage.
+        - Google Drive: save a customer-owned service account, share the folders with its client email,
+          and pass its `credentialId` in `sourceGoogleDrive` and/or `outputGoogleDrive`.
         Send `Idempotency-Key` when retrying from your backend to avoid duplicate folder batches.
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -1476,13 +1539,11 @@ paths:
                 value:
                   sourceGoogleDrive:
                     folderId: SOURCE_FOLDER_ID
-                    accessToken: ya29...
-                    refreshToken: optional-refresh-token
+                    credentialId: 11111111-1111-4111-8111-111111111111
                   outputDestination: google-drive
                   outputGoogleDrive:
                     folderId: OUTPUT_FOLDER_ID
-                    accessToken: ya29...
-                    refreshToken: optional-refresh-token
+                    credentialId: 11111111-1111-4111-8111-111111111111
                   codec: h264
                   resolution: 1080p
       responses:
@@ -1499,7 +1560,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Missing or expired Google Drive token
+          description: Missing dashboard Google Drive connection
           content:
             application/json:
               schema:

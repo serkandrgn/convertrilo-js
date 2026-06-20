@@ -280,6 +280,29 @@ export class ConvertriloClient {
   }
 
   // On-Demand Encoding
+  async getGoogleDriveCredentials() {
+    return this.request<
+      paths["/ondemand/credentials/google-drive"]["get"]["responses"]["200"]["content"]["application/json"]
+    >(`/ondemand/credentials/google-drive`);
+  }
+
+  async createGoogleDriveCredential(
+    body: paths["/ondemand/credentials/google-drive"]["post"]["requestBody"]["content"]["application/json"]
+  ) {
+    return this.request<
+      paths["/ondemand/credentials/google-drive"]["post"]["responses"]["201"]["content"]["application/json"]
+    >(`/ondemand/credentials/google-drive`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async deleteGoogleDriveCredential(id: string) {
+    return this.request(`/ondemand/credentials/google-drive/${id}`, {
+      method: "DELETE",
+    });
+  }
+
   async onDemandEncode(
     body: paths["/ondemand/encode"]["post"]["requestBody"]["content"]["application/json"],
     options: RequestOptions = {}

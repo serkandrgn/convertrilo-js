@@ -31,7 +31,7 @@ The `examples/` directory contains starter scripts for the main integration path
 
 - `node-url-to-cdn.ts` - encode a public URL and receive a signed CDN download URL
 - `node-url-to-s3.ts` - encode a public URL and upload the result to S3/S3-compatible storage
-- `google-drive-byo-token.ts` - upload output to Google Drive using customer OAuth tokens from your app
+- `google-drive-byo-token.ts` - upload output to Google Drive using a customer-owned service account
 - `folder-ingest-s3.ts` - queue one encode job per video in an S3 prefix
 - `idempotency.ts` - safely retry `createJob` and `createJobsBulk`
 - `webhook-receiver-hmac.ts` - verify managed webhook HMAC signatures from a Node receiver
@@ -39,8 +39,8 @@ The `examples/` directory contains starter scripts for the main integration path
 Local SDK smoke tests use `.env`, but published SDK users should provide credentials through their
 own server environment. Do not put Convertrilo API keys or customer storage tokens in frontend code.
 
-For a complete server-to-server walkthrough covering URL, S3, folder ingest, Google Drive BYO
-OAuth tokens, polling, and webhooks, see
+For a complete server-to-server walkthrough covering URL, S3, folder ingest, Google Drive
+service accounts, polling, and webhooks, see
 [`docs/API-INTEGRATION-GUIDE.md`](docs/API-INTEGRATION-GUIDE.md).
 
 ## Idempotent Job Creation
@@ -130,10 +130,16 @@ For S3-compatible services, pass `endpoint` and usually `forcePathStyle: true`.
 
 ## URL Source To Google Drive Output
 
-For API integrations, the customer should authorize Google Drive inside your application.
-Then your backend passes the resulting Google token to Convertrilo.
+For headless API integrations, save a customer-owned Google service account once.
+Use a Google Shared Drive for output and add the returned service-account email as a member
+with permission to create files.
 
 ```ts
+const credential = await client.createGoogleDriveCredential({
+  name: "Production Drive",
+  serviceAccount: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!),
+});
+
 const job = await client.onDemandEncode({
   sourceUrl: "https://example.com/input.mp4",
   codec: "h264",
@@ -141,16 +147,14 @@ const job = await client.onDemandEncode({
   outputGoogleDrive: {
     folderId: "GOOGLE_DRIVE_FOLDER_ID",
     fileName: "input-1080p.mp4",
-    accessToken: customerGoogleAccessToken,
-    refreshToken: customerGoogleRefreshToken,
+    credentialId: credential.id,
   },
 });
 
 console.log(job.jobId);
 ```
 
-Dashboard Google OAuth is for dashboard workflows. API integrations should use this
-bring-your-own-token pattern.
+Dashboard Google Picker authorization is separate from SDK automation.
 
 ## Folder Ingest
 
@@ -198,12 +202,12 @@ Queue one job per video in a Google Drive folder:
 const batch = await client.onDemandIngestFolder({
   sourceGoogleDrive: {
     folderId: "SOURCE_FOLDER_ID",
-    accessToken: customerGoogleAccessToken,
+    credentialId: credential.id,
   },
   outputDestination: "google-drive",
   outputGoogleDrive: {
     folderId: "OUTPUT_FOLDER_ID",
-    accessToken: customerGoogleAccessToken,
+    credentialId: credential.id,
   },
   codec: "h264",
   maxFiles: 25,
@@ -215,7 +219,7 @@ for (const job of batch.jobs || []) {
 }
 ```
 
-For BYO OAuth, refresh Google tokens in your own backend and pass a current `accessToken` to Convertrilo.
+Convertrilo mints short-lived Google tokens from the encrypted service-account credential when each worker starts.
 
 Poll each returned `jobId` with `client.onDemandStatus(jobId)`.
 

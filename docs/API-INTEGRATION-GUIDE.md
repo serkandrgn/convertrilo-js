@@ -2,7 +2,7 @@
 
 This guide is for server-to-server integrations that want to use Convertrilo as a low-cost video encoding backend.
 
-Do not call Convertrilo directly from browser or mobile apps. Keep Convertrilo API keys, S3 credentials, and Google OAuth tokens on your backend.
+Do not call Convertrilo directly from browser or mobile apps. Keep Convertrilo API keys and storage credentials on your backend.
 
 ## Core Model
 
@@ -12,7 +12,7 @@ Do not call Convertrilo directly from browser or mobile apps. Keep Convertrilo A
 4. Convertrilo queues one or more encode jobs.
 5. Your backend tracks completion by polling job status or receiving managed webhooks.
 
-API users do not need to connect Google Drive in the Convertrilo dashboard. For Google Drive integrations, your app should run its own Google OAuth flow and pass customer-owned `accessToken` and optional `refreshToken` values to Convertrilo.
+API users do not use the dashboard Google Picker flow. Google Drive automation uses a customer-owned service account whose email has access to the relevant folders.
 
 ## Authentication
 
@@ -28,7 +28,7 @@ Use API keys with the minimum scopes needed by your integration. Most encode int
 - `jobs:create`
 - `jobs:read`
 - `jobs:cancel` if you expose cancellation
-- `credentials:manage` only if your backend manages saved S3 credentials via
+- `credentials:manage` only if your backend manages saved storage credentials via
   the credential-management endpoints
 
 ## TypeScript SDK
@@ -206,11 +206,19 @@ For folder ingest, Convertrilo generates each job `externalId` as `${externalIdP
 
 Only files with video extensions are queued. Use `maxFiles` to cap how many discovered videos are queued from a folder. If no video files are found, the API returns `404`.
 
-## Flow 4: Google Drive With BYO OAuth Tokens
+## Flow 4: Google Drive With a Service Account
 
-Use this when your app already owns the customer relationship and can run Google OAuth itself.
+Create a service account in the customer's Google Cloud project and save it once. Convertrilo encrypts the JSON credential and returns only metadata.
 
-Do not send customers to the Convertrilo dashboard OAuth flow for API usage. Your app should request the Google scopes it needs, store refresh tokens on your backend, refresh them with your own Google OAuth client, and pass a fresh access token to Convertrilo per request.
+```ts
+const credential = await client.createGoogleDriveCredential({
+  name: "Production Drive",
+  serviceAccount: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!),
+});
+```
+
+Share source folders with `credential.clientEmail` as Reader. Use a Google Shared Drive for
+output and add the service account as a member with permission to create files.
 
 For output-only jobs:
 
@@ -222,7 +230,7 @@ const job = await client.onDemandEncode({
   outputGoogleDrive: {
     folderId: "GOOGLE_DRIVE_OUTPUT_FOLDER_ID",
     fileName: "input-1080p.mp4",
-    accessToken: customerGoogleAccessToken,
+    credentialId: credential.id,
   },
 });
 ```
@@ -233,19 +241,19 @@ For folder ingest from Google Drive to Google Drive:
 const batch = await client.onDemandIngestFolder({
   sourceGoogleDrive: {
     folderId: "SOURCE_FOLDER_ID",
-    accessToken: customerGoogleAccessToken,
+    credentialId: credential.id,
   },
   outputDestination: "google-drive",
   outputGoogleDrive: {
     folderId: "OUTPUT_FOLDER_ID",
-    accessToken: customerGoogleAccessToken,
+    credentialId: credential.id,
   },
   codec: "h264",
   resolution: "1080p",
 });
 ```
 
-For BYO OAuth, treat Convertrilo as an access-token consumer, not the owner of your Google OAuth refresh flow. Google refresh tokens are bound to the OAuth client that created them, so your backend should refresh customer tokens itself and send a current `accessToken`. Without a valid access token, Google Drive folder ingest returns `401`.
+Workers load the encrypted credential by ID and mint a fresh short-lived Google token when each job starts.
 
 ## Tracking Completion
 
@@ -273,9 +281,9 @@ For production workflows, prefer managed webhooks. Managed webhooks are HMAC sig
 Common responses:
 
 - `400`: invalid request payload
-- `401`: missing API auth or missing/expired Google Drive token
+- `401`: missing API authentication
 - `403`: API key does not have the required scope
 - `404`: folder ingest found no video files
 - `410`: Dropbox source or destination was requested; Dropbox is deprecated
 
-Treat encode job failure separately from request failure. A request can return `200` because the job was queued, then the job can later fail during download, encode, upload, or token refresh.
+Treat encode job failure separately from request failure. A request can return `200` because the job was queued, then the job can later fail during download, encode, upload, or credential access.

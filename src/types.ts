@@ -1248,6 +1248,104 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/ondemand/credentials/google-drive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List saved Google Drive service-account credentials */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Credential metadata */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            credentials?: components["schemas"]["GoogleDriveCredential"][];
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Save an encrypted Google Drive service-account credential */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GoogleDriveCredentialCreate"];
+                };
+            };
+            responses: {
+                /** @description Credential saved */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GoogleDriveCredential"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ondemand/credentials/google-drive/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a Google Drive service-account credential */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Credential deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ondemand/encode": {
         parameters: {
             query?: never;
@@ -1357,10 +1455,8 @@ export interface paths {
          *
          *     For API integrations, use bring-your-own credentials:
          *     - S3-compatible storage: pass `sourceS3` and/or `outputS3` credentials from your backend.
-         *     - Google Drive: pass customer OAuth `accessToken` values in `sourceGoogleDrive` and/or `outputGoogleDrive`.
-         *     - Include `refreshToken` when jobs may outlive a short access token.
-         *
-         *     Your users do not need to connect Google Drive inside the Convertrilo dashboard for API usage.
+         *     - Google Drive: save a customer-owned service account, share the folders with its client email,
+         *       and pass its `credentialId` in `sourceGoogleDrive` and/or `outputGoogleDrive`.
          *     Send `Idempotency-Key` when retrying from your backend to avoid duplicate folder batches.
          */
         post: {
@@ -1397,7 +1493,7 @@ export interface paths {
                         "application/json": components["schemas"]["ErrorResponse"];
                     };
                 };
-                /** @description Missing or expired Google Drive token */
+                /** @description Missing dashboard Google Drive connection */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -1792,7 +1888,7 @@ export interface components {
             /**
              * @description Requested API key scopes. Use the minimum scopes needed:
              *     `jobs:create`, `jobs:read`, `jobs:cancel`, `tokens:read`,
-             *     `webhooks:manage`, and `credentials:manage` for saved S3 credential management.
+             *     `webhooks:manage`, and `credentials:manage` for saved storage credential management.
              */
             scopes?: ("jobs:create" | "jobs:read" | "jobs:cancel" | "tokens:read" | "tokens:write" | "webhooks:manage" | "credentials:manage")[];
             expiresInDays?: number;
@@ -1923,22 +2019,38 @@ export interface components {
             /** @default true */
             forcePathStyle?: boolean;
         };
-        /** @description Google Drive folder source for API integrations. Pass a customer-owned OAuth token instead of sending the user through the Convertrilo dashboard. */
+        /** @description Google Drive folder source for headless API integrations. The saved service account must have Reader access to the folder. */
         GoogleDriveFolderSource: {
             folderId: string;
-            /** @description Short-lived Google OAuth access token supplied by the API caller. Must allow reading/listing files in the folder. */
-            accessToken?: string;
-            /** @description Optional Google refresh token supplied by the API caller. Recommended for long-running folder jobs so workers can refresh expired access tokens. */
-            refreshToken?: string;
+            /** Format: uuid */
+            credentialId: string;
         };
-        /** @description Google Drive output destination for API integrations. Pass a customer-owned OAuth token with upload access to the destination folder. */
+        GoogleDriveSelectedFile: {
+            fileId: string;
+            fileName: string;
+            mimeType?: string;
+        };
+        /** @description Google Drive output destination. SDK callers provide a saved service-account credential ID; dashboard callers use their connected drive.file grant. */
         GoogleDriveOutput: {
             folderId: string;
             fileName?: string;
-            /** @description Short-lived Google OAuth access token supplied by the API caller. Must allow uploading to the destination folder. */
-            accessToken?: string;
-            /** @description Optional Google refresh token supplied by the API caller. Recommended for long-running jobs so workers can refresh expired access tokens. */
-            refreshToken?: string;
+            /** Format: uuid */
+            credentialId?: string;
+        };
+        GoogleDriveCredentialCreate: {
+            name: string;
+            serviceAccount: string | {
+                [key: string]: unknown;
+            };
+        };
+        GoogleDriveCredential: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            clientEmail?: string;
+            projectId?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
         };
         OnDemandEncodeRequest: {
             /** Format: uri */
@@ -2117,6 +2229,7 @@ export interface components {
             maxFiles?: number;
             sourceS3?: components["schemas"]["S3FolderSource"];
             sourceGoogleDrive?: components["schemas"]["GoogleDriveFolderSource"];
+            sourceGoogleDriveFiles?: components["schemas"]["GoogleDriveSelectedFile"][];
             /**
              * @deprecated
              * @description Deprecated. Requests using Dropbox ingest return 410 Gone.
