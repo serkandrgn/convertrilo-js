@@ -115,6 +115,7 @@ components:
           type: integer
           enum: [1, 2]
           default: 1
+          description: Requested encoding passes. When optimize is vmaf, the API uses and bills one effective final pass.
         policy:
           type: string
           enum: [fastest, gpu_first, gpu_only]
@@ -174,6 +175,11 @@ components:
             neu: { type: number }
             totalNeu: { type: number }
             reserved: { type: number }
+            requestedPasses: { type: integer, enum: [1, 2] }
+            effectivePasses:
+              type: integer
+              enum: [1, 2]
+              description: Pass count actually used for pricing and encoding. VMAF requests use 1.
     ProbeDurationResponse:
       type: object
       properties:
@@ -187,7 +193,10 @@ components:
         fps: { type: integer }
         preset: { type: string, enum: [fast, standard, slow] }
         bitrateTier: { type: string, enum: [low, medium, high] }
-        passes: { type: integer, enum: [1, 2] }
+        passes:
+          type: integer
+          enum: [1, 2]
+          description: Requested passes. Ignored for execution and billing when optimize is vmaf.
         policy: { type: string, enum: [gpu_only, gpu_first, fastest] }
         container: { type: string, enum: [mp4, mkv, webm, mov] }
         quality: { type: string, enum: [good, better, best] }
@@ -204,6 +213,11 @@ components:
             durationSec: { type: number }
             totalNeu: { type: number }
             reserved: { type: number }
+            requestedPasses: { type: integer, enum: [1, 2] }
+            effectivePasses:
+              type: integer
+              enum: [1, 2]
+              description: Pass count used for pricing and execution.
     ConfirmRequest:
       type: object
       properties:
@@ -657,6 +671,11 @@ components:
             multiplier: { type: number }
             totalNeu: { type: number }
             reserved: { type: number }
+            requestedPasses: { type: integer, enum: [1, 2] }
+            effectivePasses:
+              type: integer
+              enum: [1, 2]
+              description: Pass count used for pricing and execution. VMAF requests use 1.
         statusUrl: { type: string }
         webhook: { type: string, nullable: true }
     OnDemandStatusResponse:
@@ -717,7 +736,12 @@ components:
         preset: { type: string, enum: [fast, standard, slow], default: fast }
         bitrateTier:
           { type: string, enum: [low, medium, high], default: medium }
-        passes: { type: integer, minimum: 1, maximum: 2, default: 1 }
+        passes:
+          type: integer
+          minimum: 1
+          maximum: 2
+          default: 1
+          description: Requested passes. VMAF optimization always uses and bills one effective final pass.
         optimize: { type: string, enum: [none, vmaf], default: none }
         vmafTarget: { type: integer, minimum: 50, maximum: 99 }
         container: { type: string, enum: [mp4, mkv, webm, mov], default: mp4 }

@@ -1692,6 +1692,7 @@ export interface components {
              */
             bitrateTier?: "low" | "medium" | "high";
             /**
+             * @description Requested encoding passes. When optimize is vmaf, the API uses and bills one effective final pass.
              * @default 1
              * @enum {integer}
              */
@@ -1747,6 +1748,13 @@ export interface components {
                 neu?: number;
                 totalNeu?: number;
                 reserved?: number;
+                /** @enum {integer} */
+                requestedPasses?: 1 | 2;
+                /**
+                 * @description Pass count actually used for pricing and encoding. VMAF requests use 1.
+                 * @enum {integer}
+                 */
+                effectivePasses?: 1 | 2;
             };
         };
         ProbeDurationResponse: {
@@ -1762,7 +1770,10 @@ export interface components {
             preset?: "fast" | "standard" | "slow";
             /** @enum {string} */
             bitrateTier?: "low" | "medium" | "high";
-            /** @enum {integer} */
+            /**
+             * @description Requested passes. Ignored for execution and billing when optimize is vmaf.
+             * @enum {integer}
+             */
             passes?: 1 | 2;
             /** @enum {string} */
             policy?: "gpu_only" | "gpu_first" | "fastest";
@@ -1781,6 +1792,13 @@ export interface components {
                 durationSec?: number;
                 totalNeu?: number;
                 reserved?: number;
+                /** @enum {integer} */
+                requestedPasses?: 1 | 2;
+                /**
+                 * @description Pass count used for pricing and execution.
+                 * @enum {integer}
+                 */
+                effectivePasses?: 1 | 2;
             };
         };
         ConfirmRequest: {
@@ -2133,6 +2151,13 @@ export interface components {
                 multiplier?: number;
                 totalNeu?: number;
                 reserved?: number;
+                /** @enum {integer} */
+                requestedPasses?: 1 | 2;
+                /**
+                 * @description Pass count used for pricing and execution. VMAF requests use 1.
+                 * @enum {integer}
+                 */
+                effectivePasses?: 1 | 2;
             };
             statusUrl: string;
             webhook?: string | null;
@@ -2202,7 +2227,10 @@ export interface components {
              * @enum {string}
              */
             bitrateTier?: "low" | "medium" | "high";
-            /** @default 1 */
+            /**
+             * @description Requested passes. VMAF optimization always uses and bills one effective final pass.
+             * @default 1
+             */
             passes?: number;
             /**
              * @default none

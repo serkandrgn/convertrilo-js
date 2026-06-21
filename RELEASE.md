@@ -1,5 +1,10 @@
 # Release Checklist
 
+Current release: `0.0.18`
+
+- Documents VMAF as a one-effective-pass workflow.
+- Adds `requestedPasses` and `effectivePasses` to pricing and estimate response types.
+
 1. Update `openapi.yaml` from the backend API spec.
 2. Run `pnpm install --frozen-lockfile`.
 3. Run `pnpm run generate`.

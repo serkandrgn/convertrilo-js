@@ -4,6 +4,12 @@ This guide is for server-to-server integrations that want to use Convertrilo as 
 
 Do not call Convertrilo directly from browser or mobile apps. Keep Convertrilo API keys and storage credentials on your backend.
 
+## VMAF Pass Semantics
+
+VMAF samples candidate settings and performs one optimized final encode. If a client sends both `optimize: "vmaf"` and `passes: 2`, the request remains valid for backward compatibility, but execution and billing use one effective pass.
+
+Estimate and pricing responses expose `requestedPasses` and `effectivePasses`. New integrations should send `passes: 1` when VMAF is enabled.
+
 ## Core Model
 
 1. Your app authenticates your user.

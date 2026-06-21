@@ -2,6 +2,12 @@
 
 Type-safe client for the Convertrilo API.
 
+## VMAF And Encoding Passes
+
+When `optimize: "vmaf"` is requested, Convertrilo performs VMAF sampling and one optimized final encode. A supplied `passes: 2` value remains accepted for backward compatibility, but the API uses and bills one effective pass.
+
+Pricing responses expose `requestedPasses` and `effectivePasses`. New integrations should use `passes: 1` with VMAF.
+
 ## Install
 
 ```bash
