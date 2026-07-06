@@ -1,10 +1,10 @@
 # Release Checklist
 
-Current release: `0.1.1`
+Current release: `0.1.2`
 
-- Adds a beginner-friendly CLI quickstart for non-SDK users.
-- Links the quickstart from the README and technical CLI/MCP guide.
-- Keeps the `0.1.0` CLI and MCP runtime behavior unchanged.
+- Adds official MCP Registry metadata in `server.json`.
+- Adds `mcpName` and MCP-related npm keywords for registry verification and discovery.
+- Adds reusable marketplace listing copy for Smithery, Glama, mcp.so, and registry submissions.
 
 1. Update `openapi.yaml` from the backend API spec.
 2. Run `npm run generate`.
@@ -21,8 +21,8 @@ Current release: `0.1.1`
 8. Commit and tag:
 
    ```bash
-   git commit -am "Release v0.1.1"
-   git tag v0.1.1
+   git commit -am "Release v0.1.2"
+   git tag v0.1.2
    ```
 
 9. Publish:

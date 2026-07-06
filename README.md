@@ -43,6 +43,10 @@ S3 output examples, VMAF, two-pass, status, cancel, and balance workflows.
 If you want the simplest terminal walkthrough, start with
 [`docs/CLI-QUICKSTART.md`](docs/CLI-QUICKSTART.md).
 
+Marketplace and MCP registry metadata lives in
+[`server.json`](server.json) and
+[`docs/MCP-MARKETPLACE-LISTING.md`](docs/MCP-MARKETPLACE-LISTING.md).
+
 ## Create A Client
 
 ```ts
