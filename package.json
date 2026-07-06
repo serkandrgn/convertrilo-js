@@ -1,6 +1,6 @@
 {
   "name": "@convertrilo/sdk",
-  "version": "0.0.18",
+  "version": "0.1.0",
   "description": "TypeScript client for the Convertrilo video encoding API",
   "private": false,
   "license": "MIT",
@@ -26,10 +26,22 @@
   "type": "module",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
+  "bin": {
+    "convertrilo": "dist/src/cli.js",
+    "convertrilo-mcp": "dist/src/mcp.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
+    },
+    "./cli": {
+      "types": "./dist/src/cli.d.ts",
+      "import": "./dist/src/cli.js"
+    },
+    "./mcp": {
+      "types": "./dist/src/mcp.d.ts",
+      "import": "./dist/src/mcp.js"
     }
   },
   "files": [
@@ -48,7 +60,7 @@
     "clean": "rimraf dist",
     "generate": "openapi-typescript openapi.yaml -o src/types.ts --default-non-nullable false",
     "build": "tsc -p tsconfig.json",
-    "prepack": "pnpm run clean && pnpm run generate && pnpm run build"
+    "prepack": "npm run clean && npm run generate && npm run build"
   },
   "dependencies": {},
   "devDependencies": {

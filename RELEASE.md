@@ -1,22 +1,24 @@
 # Release Checklist
 
-Current release: `0.0.18`
+Current release: `0.1.0`
 
-- Documents VMAF as a one-effective-pass workflow.
-- Adds `requestedPasses` and `effectivePasses` to pricing and estimate response types.
+- Adds the `convertrilo` CLI for encode, status, wait, cancel, and balance workflows.
+- Adds the `convertrilo-mcp` stdio MCP server for agent and workflow integrations.
+- Adds shared automation helpers for API-key configuration, job creation, and polling.
+- Documents CLI, MCP, VMAF, two-pass, S3 output, and agent-safe usage.
 
 1. Update `openapi.yaml` from the backend API spec.
-2. Run `pnpm install --frozen-lockfile`.
-3. Run `pnpm run generate`.
-4. Run `pnpm run build`.
+2. Run `npm run generate`.
+3. Run `npm run build`.
+4. Run the CLI and MCP smoke tests.
 5. Run the example typecheck:
 
    ```bash
-   pnpm exec tsc --noEmit --moduleResolution bundler --module esnext --target es2022 --lib es2022,dom --types node examples/*.ts
+   ./node_modules/.bin/tsc --noEmit --moduleResolution bundler --module esnext --target es2022 --lib es2022,dom --types node examples/*.ts
    ```
 
-6. Run `pnpm pack --dry-run` and inspect the tarball contents.
-7. Bump `version` in `package.json`.
+6. Run `npm pack --dry-run` and inspect the tarball contents.
+7. Run a tarball install test and verify `convertrilo` plus `convertrilo-mcp`.
 8. Commit and tag:
 
    ```bash
@@ -27,5 +29,5 @@ Current release: `0.0.18`
 9. Publish:
 
    ```bash
-   pnpm publish --access public
+   npm publish --access public
    ```

@@ -17,6 +17,29 @@ pnpm add @convertrilo/sdk
 The package currently targets modern Node.js runtimes with global `fetch`. If your runtime does
 not provide `fetch`, pass `fetchImpl` to the client.
 
+## CLI And MCP Automation
+
+The package includes two executable automation tools:
+
+```bash
+export CONVERTRILO_API_KEY="cvr_..."
+
+convertrilo encode https://example.com/input.mp4 \
+  --codec h264 \
+  --resolution 1080p \
+  --quality better \
+  --wait \
+  --json
+
+convertrilo-mcp
+```
+
+Use `convertrilo` for scripts, CI, cron, and local operations. Use `convertrilo-mcp`
+as a stdio MCP server for agent and workflow integrations.
+
+See [`docs/CLI-AND-MCP.md`](docs/CLI-AND-MCP.md) for commands, MCP client config,
+S3 output examples, VMAF, two-pass, status, cancel, and balance workflows.
+
 ## Create A Client
 
 ```ts
