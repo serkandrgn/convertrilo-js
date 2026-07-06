@@ -7,6 +7,9 @@ The SDK package ships two automation entrypoints:
 
 Both use the same Convertrilo API primitives as the TypeScript SDK.
 
+If you are new to terminal tools, read
+[`CLI-QUICKSTART.md`](CLI-QUICKSTART.md) first.
+
 ## Environment
 
 ```bash

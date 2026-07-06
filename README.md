@@ -40,6 +40,9 @@ as a stdio MCP server for agent and workflow integrations.
 See [`docs/CLI-AND-MCP.md`](docs/CLI-AND-MCP.md) for commands, MCP client config,
 S3 output examples, VMAF, two-pass, status, cancel, and balance workflows.
 
+If you want the simplest terminal walkthrough, start with
+[`docs/CLI-QUICKSTART.md`](docs/CLI-QUICKSTART.md).
+
 ## Create A Client
 
 ```ts

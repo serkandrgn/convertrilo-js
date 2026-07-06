@@ -1,11 +1,10 @@
 # Release Checklist
 
-Current release: `0.1.0`
+Current release: `0.1.1`
 
-- Adds the `convertrilo` CLI for encode, status, wait, cancel, and balance workflows.
-- Adds the `convertrilo-mcp` stdio MCP server for agent and workflow integrations.
-- Adds shared automation helpers for API-key configuration, job creation, and polling.
-- Documents CLI, MCP, VMAF, two-pass, S3 output, and agent-safe usage.
+- Adds a beginner-friendly CLI quickstart for non-SDK users.
+- Links the quickstart from the README and technical CLI/MCP guide.
+- Keeps the `0.1.0` CLI and MCP runtime behavior unchanged.
 
 1. Update `openapi.yaml` from the backend API spec.
 2. Run `npm run generate`.
@@ -22,8 +21,8 @@ Current release: `0.1.0`
 8. Commit and tag:
 
    ```bash
-   git commit -am "Release v0.1.0"
-   git tag v0.1.0
+   git commit -am "Release v0.1.1"
+   git tag v0.1.1
    ```
 
 9. Publish:
