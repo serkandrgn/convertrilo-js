@@ -1,10 +1,10 @@
 # Release Checklist
 
-Current release: `0.1.2`
+Current release: `0.1.3`
 
-- Adds official MCP Registry metadata in `server.json`.
-- Adds `mcpName` and MCP-related npm keywords for registry verification and discovery.
-- Adds reusable marketplace listing copy for Smithery, Glama, mcp.so, and registry submissions.
+- Removes internal marketplace worksheet copy from the public npm package and repo.
+- Keeps official MCP Registry metadata in `server.json`.
+- Preserves MCP package discovery through `mcpName`, npm keywords, and the `convertrilo-mcp` binary.
 
 1. Update `openapi.yaml` from the backend API spec.
 2. Run `npm run generate`.
@@ -21,8 +21,8 @@ Current release: `0.1.2`
 8. Commit and tag:
 
    ```bash
-   git commit -am "Release v0.1.2"
-   git tag v0.1.2
+   git commit -am "Release v0.1.3"
+   git tag v0.1.3
    ```
 
 9. Publish:
