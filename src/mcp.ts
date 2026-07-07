@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import { createInterface } from "node:readline";
 import {
-  createAutomationClient,
+  createAutomationClientFromResolvedConfig,
   createEncodeJob,
   type EncodeRequest,
   waitForJob,
 } from "./automation.js";
+import { readCliConfig } from "./config.js";
 
 type JsonRpcRequest = {
   jsonrpc?: "2.0";
@@ -197,7 +198,14 @@ function buildEncodeRequest(args: Record<string, unknown>) {
 async function callTool(params: unknown) {
   const toolCall = paramsObject(params) as ToolCallParams;
   const args = toolCall.arguments ?? {};
-  const client = createAutomationClient();
+  const saved = await readCliConfig();
+  const client = createAutomationClientFromResolvedConfig({
+    apiKey: process.env.CONVERTRILO_API_KEY ?? saved.apiKey,
+    baseUrl:
+      process.env.CONVERTRILO_BASE_URL ??
+      saved.baseUrl ??
+      "https://api.convertrilo.com",
+  });
 
   if (toolCall.name === "create_encode_job") {
     const payload = buildEncodeRequest(args);
@@ -234,7 +242,7 @@ async function handle(request: JsonRpcRequest) {
       capabilities: { tools: {} },
       serverInfo: {
         name: "convertrilo-mcp",
-        version: "0.1.0",
+        version: "0.2.2",
       },
     });
     return;

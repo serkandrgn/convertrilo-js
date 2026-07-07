@@ -1,6 +1,6 @@
 # Release Checklist
 
-Current release: `0.2.1`
+Current release: `0.2.2`
 
 - Replaces custom CLI parsing with `commander`.
 - Adds no-args interactive encode wizard.
@@ -11,6 +11,7 @@ Current release: `0.2.1`
 - Adds `convertrilo init` as an alias for `convertrilo login`.
 - Adds `convertrilo completion bash|zsh|fish`.
 - Improves API error messages for rejected keys, billing/token issues, invalid requests, missing jobs, and API trouble.
+- Shows terminal `success` progress as `100%` even if an older backend returns stale `0`.
 
 1. Update `openapi.yaml` from the backend API spec.
 2. Run `npm run generate`.
@@ -27,8 +28,8 @@ Current release: `0.2.1`
 8. Commit and tag:
 
    ```bash
-   git commit -am "Release v0.2.1"
-   git tag v0.2.1
+   git commit -am "Release v0.2.2"
+   git tag v0.2.2
    ```
 
 9. Publish:

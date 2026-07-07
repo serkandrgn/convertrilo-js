@@ -125,7 +125,9 @@ function wantsMachineOutput(options: OutputOptions = {}) {
   );
 }
 
-function formatProgressValue(progress: unknown) {
+function formatProgressValue(progress: unknown, status?: unknown) {
+  if (status === "success") return "100%";
+  if (status === "failed" || status === "canceled") return "terminal";
   if (typeof progress !== "number" || Number.isNaN(progress)) return "";
   if (progress <= 1) return `${Math.round(progress * 100)}%`;
   return `${Math.round(progress)}%`;
@@ -134,7 +136,7 @@ function formatProgressValue(progress: unknown) {
 function formatJobLine(status: Record<string, unknown>) {
   const parts = [
     `status=${String(status.status ?? "unknown")}`,
-    `progress=${formatProgressValue(status.progress) || "pending"}`,
+    `progress=${formatProgressValue(status.progress, status.status) || "pending"}`,
   ];
   if (status.encoder) parts.push(`encoder=${String(status.encoder)}`);
   if (status.failureMessage) parts.push(`error=${String(status.failureMessage)}`);
@@ -483,7 +485,7 @@ const program = new Command();
 program
   .name("convertrilo")
   .description("Convertrilo video encoding CLI")
-  .version("0.2.1")
+  .version("0.2.2")
   .action(async () => {
     await runWizard();
   });
