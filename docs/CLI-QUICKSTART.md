@@ -22,7 +22,27 @@ That means: take this video URL, encode it, wait until it is done, and print the
 
 ## 1. Set Your API Key
 
-Run this in your terminal:
+Easiest option:
+
+```bash
+convertrilo login
+```
+
+This shows where to create/copy an API key, then saves it at `~/.convertrilo/config.json`.
+
+You can open the API key page directly:
+
+```bash
+convertrilo dashboard
+```
+
+The page is:
+
+```text
+https://convertrilo.com/dashboard/user/developer
+```
+
+You can also use an environment variable:
 
 ```bash
 export CONVERTRILO_API_KEY="cvr_your_api_key_here"
@@ -173,7 +193,13 @@ which convertrilo
 
 ### `Missing CONVERTRILO_API_KEY`
 
-Set your API key:
+Save or export your API key:
+
+```bash
+convertrilo login
+```
+
+or:
 
 ```bash
 export CONVERTRILO_API_KEY="cvr_your_api_key_here"
@@ -182,3 +208,15 @@ export CONVERTRILO_API_KEY="cvr_your_api_key_here"
 ### The Output Is Huge
 
 That is normal with `--json` because signed download URLs are long. The most important fields are `jobId`, `status`, `encoder`, and `downloadUrl`.
+
+To print one field:
+
+```bash
+convertrilo status JOB_ID --field status
+```
+
+To print only the download URL:
+
+```bash
+convertrilo wait JOB_ID --download-url-only
+```

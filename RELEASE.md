@@ -1,10 +1,12 @@
 # Release Checklist
 
-Current release: `0.1.3`
+Current release: `0.2.0`
 
-- Removes internal marketplace worksheet copy from the public npm package and repo.
-- Keeps official MCP Registry metadata in `server.json`.
-- Preserves MCP package discovery through `mcpName`, npm keywords, and the `convertrilo-mcp` binary.
+- Replaces custom CLI parsing with `commander`.
+- Adds no-args interactive encode wizard.
+- Adds `login`, `logout`, `dashboard`, `doctor`, `download`, and friendly config commands.
+- Adds output helpers: `--field`, `--job-id-only`, and `--download-url-only`.
+- Adds local config storage at `~/.convertrilo/config.json`.
 
 1. Update `openapi.yaml` from the backend API spec.
 2. Run `npm run generate`.
@@ -21,8 +23,8 @@ Current release: `0.1.3`
 8. Commit and tag:
 
    ```bash
-   git commit -am "Release v0.1.3"
-   git tag v0.1.3
+   git commit -am "Release v0.2.0"
+   git tag v0.2.0
    ```
 
 9. Publish:

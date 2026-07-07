@@ -65,6 +65,19 @@ export function createAutomationClient(config: AutomationConfig = {}) {
   return new ConvertriloClient({ baseUrl, apiKey });
 }
 
+export function createAutomationClientFromResolvedConfig(config: AutomationConfig) {
+  const baseUrl = config.baseUrl ?? "https://api.convertrilo.com";
+  const apiKey = config.apiKey;
+
+  if (!apiKey) {
+    throw new Error(
+      "Missing API key. Run `convertrilo login` or set CONVERTRILO_API_KEY.",
+    );
+  }
+
+  return new ConvertriloClient({ baseUrl, apiKey });
+}
+
 export function parseJsonRecord(value: string, label: string): JsonRecord {
   const parsed = JSON.parse(value) as unknown;
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
