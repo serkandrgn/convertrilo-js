@@ -242,7 +242,7 @@ async function handle(request: JsonRpcRequest) {
       capabilities: { tools: {} },
       serverInfo: {
         name: "convertrilo-mcp",
-        version: "0.2.4",
+        version: "0.2.5",
       },
     });
     return;
