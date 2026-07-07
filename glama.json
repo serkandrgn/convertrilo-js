@@ -1,0 +1,43 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": ["serkandrgn"],
+  "name": "convertrilo",
+  "displayName": "Convertrilo",
+  "description": "Create and manage Convertrilo video encoding jobs from MCP clients and agent workflows.",
+  "license": "MIT",
+  "categories": ["Video", "Media", "Automation", "Developer Tools"],
+  "environmentVariables": [
+    {
+      "name": "CONVERTRILO_API_KEY",
+      "description": "Convertrilo API key used to authenticate requests.",
+      "required": true
+    },
+    {
+      "name": "CONVERTRILO_BASE_URL",
+      "description": "Optional API base URL. Defaults to https://api.convertrilo.com.",
+      "required": false
+    }
+  ],
+  "tools": [
+    {
+      "name": "create_encode_job",
+      "description": "Create a Convertrilo on-demand video encoding job from a source URL."
+    },
+    {
+      "name": "get_job_status",
+      "description": "Read the current status for a Convertrilo on-demand job."
+    },
+    {
+      "name": "wait_for_job",
+      "description": "Poll a Convertrilo on-demand job until success, failed, or canceled."
+    },
+    {
+      "name": "cancel_job",
+      "description": "Cancel a Convertrilo on-demand job."
+    },
+    {
+      "name": "get_token_balance",
+      "description": "Read the authenticated Convertrilo token balance."
+    }
+  ]
+}
