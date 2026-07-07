@@ -124,6 +124,74 @@ export class ConvertriloClient {
     });
   }
 
+  // Encode Presets
+  async getEncodePresets() {
+    return this.request<
+      paths["/encode-presets"]["get"]["responses"]["200"]["content"]["application/json"]
+    >(`/encode-presets`);
+  }
+
+  async createEncodePreset(
+    body: paths["/encode-presets"]["post"]["requestBody"]["content"]["application/json"]
+  ) {
+    return this.request<
+      paths["/encode-presets"]["post"]["responses"]["201"]["content"]["application/json"]
+    >(`/encode-presets`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updateEncodePreset(
+    id: string,
+    body: paths["/encode-presets/{id}"]["patch"]["requestBody"]["content"]["application/json"]
+  ) {
+    return this.request<
+      paths["/encode-presets/{id}"]["patch"]["responses"]["200"]["content"]["application/json"]
+    >(`/encode-presets/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async deleteEncodePreset(id: string) {
+    return this.request(`/encode-presets/${id}`, { method: "DELETE" });
+  }
+
+  // Output Destinations
+  async getOutputDestinations() {
+    return this.request<
+      paths["/output-destinations"]["get"]["responses"]["200"]["content"]["application/json"]
+    >(`/output-destinations`);
+  }
+
+  async createOutputDestination(
+    body: paths["/output-destinations"]["post"]["requestBody"]["content"]["application/json"]
+  ) {
+    return this.request<
+      paths["/output-destinations"]["post"]["responses"]["201"]["content"]["application/json"]
+    >(`/output-destinations`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updateOutputDestination(
+    id: string,
+    body: paths["/output-destinations/{id}"]["patch"]["requestBody"]["content"]["application/json"]
+  ) {
+    return this.request<
+      paths["/output-destinations/{id}"]["patch"]["responses"]["200"]["content"]["application/json"]
+    >(`/output-destinations/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async deleteOutputDestination(id: string) {
+    return this.request(`/output-destinations/${id}`, { method: "DELETE" });
+  }
+
   // Jobs
   async createJob(
     body: paths["/jobs"]["post"]["requestBody"]["content"]["application/json"],
@@ -375,6 +443,9 @@ export class ConvertriloClient {
       resolution?: "480p" | "720p" | "1080p" | "1440p" | "2160p";
       fps?: number;
       quality?: "good" | "better" | "best";
+      audioPolicy?: "auto" | "copy" | "transcode-aac" | "strip";
+      frameRatePolicy?: "preserve" | "cap" | "force";
+      scalePolicy?: "no-upscale" | "allow-upscale" | "downscale-only";
       priority?: "normal" | "high";
       outputExpiry?: number;
     } = {},

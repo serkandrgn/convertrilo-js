@@ -24,7 +24,7 @@ const tools = [
   {
     name: "create_encode_job",
     description:
-      "Create a Convertrilo on-demand video encoding job from a source URL.",
+      "Create a Convertrilo on-demand video encoding job from a source URL. Supports idempotency, output destinations, and explicit audio, frame-rate, and scale policies.",
     inputSchema: {
       type: "object",
       required: ["sourceUrl"],
@@ -38,6 +38,18 @@ const tools = [
           enum: ["480p", "720p", "1080p", "1440p", "2160p"],
         },
         quality: { type: "string", enum: ["good", "better", "best"] },
+        audioPolicy: {
+          type: "string",
+          enum: ["auto", "copy", "transcode-aac", "strip"],
+        },
+        frameRatePolicy: {
+          type: "string",
+          enum: ["preserve", "cap", "force"],
+        },
+        scalePolicy: {
+          type: "string",
+          enum: ["no-upscale", "allow-upscale", "downscale-only"],
+        },
         priority: { type: "string", enum: ["normal", "high"] },
         preset: { type: "string", enum: ["fast", "standard", "slow"] },
         container: { type: "string", enum: ["mp4", "mkv", "webm", "mov"] },
@@ -67,7 +79,8 @@ const tools = [
   },
   {
     name: "get_job_status",
-    description: "Read the current status for a Convertrilo on-demand job.",
+    description:
+      "Read the current status for a Convertrilo on-demand job, including source/output probes, requested/effective execution, warnings, and billing summary when available.",
     inputSchema: {
       type: "object",
       required: ["jobId"],
@@ -80,7 +93,7 @@ const tools = [
   {
     name: "wait_for_job",
     description:
-      "Poll a Convertrilo on-demand job until success, failed, or canceled.",
+      "Poll a Convertrilo on-demand job until success, failed, or canceled. Terminal responses include the worker execution report when available.",
     inputSchema: {
       type: "object",
       required: ["jobId"],
@@ -165,6 +178,9 @@ function buildEncodeRequest(args: Record<string, unknown>) {
     "codec",
     "resolution",
     "quality",
+    "audioPolicy",
+    "frameRatePolicy",
+    "scalePolicy",
     "priority",
     "preset",
     "container",
@@ -242,7 +258,7 @@ async function handle(request: JsonRpcRequest) {
       capabilities: { tools: {} },
       serverInfo: {
         name: "convertrilo-mcp",
-        version: "0.2.5",
+        version: "0.2.6",
       },
     });
     return;

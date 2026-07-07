@@ -37,6 +37,9 @@ convertrilo encode https://example.com/input.mp4 \
   --codec h264 \
   --resolution 1080p \
   --quality better \
+  --audio-policy transcode-aac \
+  --frame-rate-policy cap \
+  --scale-policy no-upscale \
   --idempotency-key asset_123:h264:1080p
 ```
 
@@ -56,6 +59,18 @@ Check status:
 ```bash
 convertrilo status <job-id> --json
 ```
+
+Finished job responses include the Rust worker report fields:
+
+- `requestedExecution`
+- `effectiveExecution`
+- `sourceProbe`
+- `outputProbe`
+- `warnings`
+- `billingSummary`
+
+Use these fields to verify the actual encoder, output geometry, frame rate,
+audio behavior, HDR/color tags, and effective billing basis.
 
 Wait for a terminal state:
 
@@ -154,7 +169,10 @@ Available tools:
 - `cancel_job`
 - `get_token_balance`
 
-Agents should use scoped API keys and deterministic idempotency keys. Do not give an agent broader account permissions than the workflow requires.
+Agents should use scoped API keys and deterministic idempotency keys. Ask agents
+to inspect `effectiveExecution`, `sourceProbe`, `outputProbe`, and `warnings`
+after terminal jobs. Do not give an agent broader account permissions than the
+workflow requires.
 
 ## MCP Smoke Test
 

@@ -13,6 +13,9 @@ export type EncodeRequest = {
   bitrateTier?: "low" | "medium" | "high";
   container?: "mp4" | "mkv" | "webm" | "mov";
   quality?: "good" | "better" | "best";
+  audioPolicy?: "auto" | "copy" | "transcode-aac" | "strip";
+  frameRatePolicy?: "preserve" | "cap" | "force";
+  scalePolicy?: "no-upscale" | "allow-upscale" | "downscale-only";
   priority?: "normal" | "high";
   outputExpiry?: number;
   webhook?: string;

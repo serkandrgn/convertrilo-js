@@ -27,6 +27,9 @@ export CONVERTRILO_API_KEY="cvr_..."
 convertrilo encode https://example.com/input.mp4 \
   --codec h264 \
   --resolution 1080p \
+  --audio-policy transcode-aac \
+  --frame-rate-policy cap \
+  --scale-policy no-upscale \
   --quality better \
   --wait \
   --json
@@ -121,6 +124,51 @@ const batch = await client.createJobsBulk({
 });
 ```
 
+## Saved Encode Presets
+
+Save reusable encode settings without storing source URLs, storage credentials, or output secrets:
+
+```ts
+const preset = await client.createEncodePreset({
+  name: "Default 1080p web MP4",
+  settings: {
+    codec: "h264",
+    resolution: "1080p",
+    fps: 30,
+    preset: "standard",
+    bitrateTier: "medium",
+    passes: 1,
+    policy: "fastest",
+    container: "mp4",
+    quality: "better",
+    optimize: "none",
+    vmafTarget: 93,
+    audioPolicy: "transcode-aac",
+    frameRatePolicy: "cap",
+    scalePolicy: "no-upscale",
+  },
+});
+
+const { presets } = await client.getEncodePresets();
+```
+
+## Saved Output Destinations
+
+Save reusable delivery targets without storing raw storage secrets in the destination itself. S3 destinations reference an encrypted saved S3 credential:
+
+```ts
+const destination = await client.createOutputDestination({
+  name: "Customer uploads bucket",
+  config: {
+    type: "s3",
+    credentialId: "0f5a7f2b-4ff2-45d4-b76f-1f7b6e98d4d1",
+    keyPrefix: "processed/",
+  },
+});
+
+const { destinations } = await client.getOutputDestinations();
+```
+
 ## URL Source To CDN Output
 
 ```ts
@@ -134,6 +182,9 @@ const job = await client.onDemandEncode({
   codec: "h264",
   resolution: "1080p",
   quality: "better",
+  audioPolicy: "transcode-aac",
+  frameRatePolicy: "cap",
+  scalePolicy: "no-upscale",
 }, {
   idempotencyKey: "encode-customer-video-123",
 });
@@ -151,6 +202,17 @@ while (true) {
 }
 
 console.log(finalStatus.downloadUrl);
+console.log(finalStatus.requestedExecution);
+console.log(finalStatus.effectiveExecution);
+console.log(finalStatus.sourceProbe?.color);
+console.log(finalStatus.outputProbe);
+```
+
+Terminal users can inspect the same report with:
+
+```bash
+convertrilo status JOB_ID --json
+convertrilo wait JOB_ID --json
 ```
 
 ## URL Source To S3 Output

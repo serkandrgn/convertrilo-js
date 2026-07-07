@@ -77,6 +77,41 @@ components:
       properties:
         jobId: { type: string, format: uuid }
         amount: { type: integer, minimum: 1 }
+    CompatibilityWarning:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        severity:
+          type: string
+          enum: [info, warning, error]
+    MediaColorProbe:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: [sdr, hdr10, hlg, unknown, conflicting]
+        primaries: { type: string, nullable: true }
+        transfer: { type: string, nullable: true }
+        matrix: { type: string, nullable: true }
+        range: { type: string, nullable: true }
+        notes:
+          type: array
+          items: { type: string }
+    MediaProbe:
+      type: object
+      properties:
+        durationSec: { type: number }
+        codec: { type: string, nullable: true }
+        width: { type: integer, nullable: true }
+        height: { type: integer, nullable: true }
+        fps: { type: number, nullable: true }
+        audioStreams: { type: integer }
+        audioCodec: { type: string, nullable: true }
+        container: { type: string, nullable: true }
+        color:
+          $ref: "#/components/schemas/MediaColorProbe"
     JobCreateRequest:
       type: object
       required: [codec, resolution, fps]
@@ -123,6 +158,18 @@ components:
         quality:
           type: string
           enum: [good, better, best]
+        audioPolicy:
+          type: string
+          enum: [auto, copy, transcode-aac, strip]
+          default: transcode-aac
+        frameRatePolicy:
+          type: string
+          enum: [preserve, cap, force]
+          default: force
+        scalePolicy:
+          type: string
+          enum: [no-upscale, allow-upscale, downscale-only]
+          default: no-upscale
         sourceUrl:
           type: string
           format: uri
@@ -180,6 +227,10 @@ components:
               type: integer
               enum: [1, 2]
               description: Pass count actually used for pricing and encoding. VMAF requests use 1.
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompatibilityWarning"
     ProbeDurationResponse:
       type: object
       properties:
@@ -202,6 +253,10 @@ components:
         quality: { type: string, enum: [good, better, best] }
         optimize: { type: string, enum: [none, vmaf] }
         vmafTarget: { type: number, minimum: 50, maximum: 99 }
+        audioPolicy: { type: string, enum: [auto, copy, transcode-aac, strip] }
+        frameRatePolicy: { type: string, enum: [preserve, cap, force] }
+        scalePolicy:
+          { type: string, enum: [no-upscale, allow-upscale, downscale-only] }
     ApproveUnifiedResponse:
       type: object
       properties:
@@ -218,6 +273,10 @@ components:
               type: integer
               enum: [1, 2]
               description: Pass count used for pricing and execution.
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompatibilityWarning"
     ConfirmRequest:
       type: object
       properties:
@@ -225,6 +284,10 @@ components:
         quality: { type: string, enum: [good, better, best] }
         optimize: { type: string, enum: [none, vmaf] }
         vmafTarget: { type: number, minimum: 1, maximum: 100 }
+        audioPolicy: { type: string, enum: [auto, copy, transcode-aac, strip] }
+        frameRatePolicy: { type: string, enum: [preserve, cap, force] }
+        scalePolicy:
+          { type: string, enum: [no-upscale, allow-upscale, downscale-only] }
     ConfirmResponse:
       type: object
       properties:
@@ -242,6 +305,8 @@ components:
         outputFilename: { type: string, nullable: true }
         status: { type: string }
         ingest: { type: string, nullable: true }
+        container: { type: string, enum: [mp4, mkv, webm, mov], nullable: true }
+        quality: { type: string, enum: [good, better, best], nullable: true }
         output:
           nullable: true
           type: object
@@ -255,6 +320,32 @@ components:
         startedAt: { type: string, format: date-time, nullable: true }
         finishedAt: { type: string, format: date-time, nullable: true }
         failureMessage: { type: string, nullable: true }
+        requestedExecution:
+          type: object
+          additionalProperties: true
+          nullable: true
+        effectiveExecution:
+          type: object
+          additionalProperties: true
+          nullable: true
+        sourceProbe:
+          $ref: "#/components/schemas/MediaProbe"
+          nullable: true
+        outputProbe:
+          $ref: "#/components/schemas/MediaProbe"
+          nullable: true
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompatibilityWarning"
+        billingSummary:
+          type: object
+          additionalProperties: true
+          nullable: true
+        executionReport:
+          type: object
+          additionalProperties: true
+          nullable: true
     ErrorResponse:
       type: object
       required: [code, message]
@@ -321,6 +412,14 @@ components:
             quality: { type: string, enum: [good, better, best] }
             optimize: { type: string, enum: [none, vmaf] }
             vmafTarget: { type: number, minimum: 50, maximum: 99 }
+            audioPolicy:
+              { type: string, enum: [auto, copy, transcode-aac, strip] }
+            frameRatePolicy: { type: string, enum: [preserve, cap, force] }
+            scalePolicy:
+              {
+                type: string,
+                enum: [no-upscale, allow-upscale, downscale-only],
+              }
     BulkCreateResponse:
       type: object
       properties:
@@ -345,6 +444,14 @@ components:
                 type: object
                 properties:
                   neu: { type: number }
+              warnings:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CompatibilityWarning"
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompatibilityWarning"
     BulkStatusResponse:
       type: object
       properties:
@@ -367,6 +474,136 @@ components:
           properties:
             container: { type: string, enum: [mp4, mkv, webm, mov] }
             quality: { type: string, enum: [good, better, best] }
+            audioPolicy:
+              { type: string, enum: [auto, copy, transcode-aac, strip] }
+            frameRatePolicy: { type: string, enum: [preserve, cap, force] }
+            scalePolicy:
+              {
+                type: string,
+                enum: [no-upscale, allow-upscale, downscale-only],
+              }
+
+    # Encode Presets
+    EncodePresetSettings:
+      type: object
+      required:
+        - codec
+        - resolution
+        - fps
+        - preset
+        - bitrateTier
+        - passes
+        - policy
+        - container
+        - quality
+        - optimize
+        - vmafTarget
+        - audioPolicy
+        - frameRatePolicy
+        - scalePolicy
+      properties:
+        codec: { type: string, enum: [h264, h265, av1] }
+        resolution:
+          { type: string, enum: [480p, 720p, 1080p, 1440p, 2160p, 4320p] }
+        fps: { type: integer, minimum: 1, maximum: 240 }
+        preset: { type: string, enum: [fast, standard, slow] }
+        bitrateTier: { type: string, enum: [low, medium, high] }
+        passes: { type: integer, enum: [1, 2] }
+        policy: { type: string, enum: [gpu_only, gpu_first, fastest] }
+        container: { type: string, enum: [mp4, mkv, webm, mov] }
+        quality: { type: string, enum: [good, better, best] }
+        optimize: { type: string, enum: [none, vmaf] }
+        vmafTarget: { type: integer, minimum: 50, maximum: 99 }
+        audioPolicy: { type: string, enum: [auto, copy, transcode-aac, strip] }
+        frameRatePolicy: { type: string, enum: [preserve, cap, force] }
+        scalePolicy:
+          { type: string, enum: [no-upscale, allow-upscale, downscale-only] }
+    EncodePresetCreateRequest:
+      type: object
+      required: [name, settings]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        settings:
+          $ref: "#/components/schemas/EncodePresetSettings"
+    EncodePresetUpdateRequest:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        settings:
+          $ref: "#/components/schemas/EncodePresetSettings"
+    EncodePresetResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        settings:
+          $ref: "#/components/schemas/EncodePresetSettings"
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    EncodePresetListResponse:
+      type: object
+      properties:
+        presets:
+          type: array
+          items:
+            $ref: "#/components/schemas/EncodePresetResponse"
+
+    # Output Destinations
+    OutputDestinationConfig:
+      oneOf:
+        - type: object
+          required: [type]
+          properties:
+            type: { type: string, enum: [cdn] }
+            outputExpiry: { type: integer, minimum: 3600, maximum: 604800 }
+        - type: object
+          required: [type, credentialId]
+          properties:
+            type: { type: string, enum: [s3] }
+            credentialId: { type: string, format: uuid }
+            keyPrefix: { type: string, maxLength: 1024 }
+        - type: object
+          required: [type, folderId]
+          properties:
+            type: { type: string, enum: [google-drive] }
+            credentialId: { type: string, format: uuid }
+            folderId: { type: string, minLength: 1 }
+            folderName: { type: string, maxLength: 255 }
+            fileNameTemplate: { type: string, maxLength: 255 }
+      discriminator:
+        propertyName: type
+    OutputDestinationCreateRequest:
+      type: object
+      required: [name, config]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        config:
+          $ref: "#/components/schemas/OutputDestinationConfig"
+    OutputDestinationUpdateRequest:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 255 }
+        config:
+          $ref: "#/components/schemas/OutputDestinationConfig"
+    OutputDestinationResponse:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        destinationType:
+          type: string
+          enum: [cdn, s3, google-drive]
+        config:
+          $ref: "#/components/schemas/OutputDestinationConfig"
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    OutputDestinationListResponse:
+      type: object
+      properties:
+        destinations:
+          type: array
+          items:
+            $ref: "#/components/schemas/OutputDestinationResponse"
 
     # API Keys
     ApiKeyCreateRequest:
@@ -631,6 +868,20 @@ components:
           { type: string, enum: [low, medium, high], default: medium }
         container: { type: string, enum: [mp4, mkv, webm, mov], default: mp4 }
         quality: { type: string, enum: [good, better, best], default: better }
+        audioPolicy:
+          {
+            type: string,
+            enum: [auto, copy, transcode-aac, strip],
+            default: transcode-aac,
+          }
+        frameRatePolicy:
+          { type: string, enum: [preserve, cap, force], default: force }
+        scalePolicy:
+          {
+            type: string,
+            enum: [no-upscale, allow-upscale, downscale-only],
+            default: no-upscale,
+          }
         priority: { type: string, enum: [normal, high], default: normal }
         outputExpiry:
           { type: integer, minimum: 3600, maximum: 604800, default: 86400 }
@@ -714,6 +965,33 @@ components:
         startedAt: { type: string, format: date-time, nullable: true }
         finishedAt: { type: string, format: date-time, nullable: true }
         failureMessage: { type: string, nullable: true }
+        requestedExecution:
+          type: object
+          additionalProperties: true
+          nullable: true
+        effectiveExecution:
+          type: object
+          additionalProperties: true
+          nullable: true
+        sourceProbe:
+          $ref: "#/components/schemas/MediaProbe"
+          nullable: true
+        outputProbe:
+          $ref: "#/components/schemas/MediaProbe"
+          nullable: true
+        warnings:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        billingSummary:
+          type: object
+          additionalProperties: true
+          nullable: true
+        executionReport:
+          type: object
+          additionalProperties: true
+          nullable: true
     OnDemandFolderIngestRequest:
       type: object
       properties:
@@ -746,6 +1024,20 @@ components:
         vmafTarget: { type: integer, minimum: 50, maximum: 99 }
         container: { type: string, enum: [mp4, mkv, webm, mov], default: mp4 }
         quality: { type: string, enum: [good, better, best], default: better }
+        audioPolicy:
+          {
+            type: string,
+            enum: [auto, copy, transcode-aac, strip],
+            default: transcode-aac,
+          }
+        frameRatePolicy:
+          { type: string, enum: [preserve, cap, force], default: force }
+        scalePolicy:
+          {
+            type: string,
+            enum: [no-upscale, allow-upscale, downscale-only],
+            default: no-upscale,
+          }
         priority: { type: string, enum: [normal, high], default: normal }
         maxFiles:
           type: integer
@@ -879,6 +1171,124 @@ paths:
               $ref: "#/components/schemas/TokenDeductRequest"
       responses:
         "200": { description: Deducted }
+  /encode-presets:
+    get:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: List saved encode presets
+      responses:
+        "200":
+          description: Saved encode presets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EncodePresetListResponse"
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Save an encode preset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EncodePresetCreateRequest"
+      responses:
+        "201":
+          description: Preset saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EncodePresetResponse"
+  /encode-presets/{id}:
+    patch:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Update a saved encode preset
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EncodePresetUpdateRequest"
+      responses:
+        "200":
+          description: Preset updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EncodePresetResponse"
+    delete:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Delete a saved encode preset
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { description: Preset deleted }
+  /output-destinations:
+    get:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: List saved output destinations
+      responses:
+        "200":
+          description: Saved output destinations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutputDestinationListResponse"
+    post:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Save an output destination
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutputDestinationCreateRequest"
+      responses:
+        "201":
+          description: Destination saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutputDestinationResponse"
+  /output-destinations/{id}:
+    patch:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Update a saved output destination
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutputDestinationUpdateRequest"
+      responses:
+        "200":
+          description: Destination updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutputDestinationResponse"
+    delete:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Delete a saved output destination
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200": { description: Destination deleted }
   /jobs:
     post:
       security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]

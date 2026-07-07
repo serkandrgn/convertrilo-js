@@ -194,6 +194,250 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/encode-presets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List saved encode presets */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Saved encode presets */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EncodePresetListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Save an encode preset */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["EncodePresetCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description Preset saved */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EncodePresetResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/encode-presets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a saved encode preset */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Preset deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update a saved encode preset */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["EncodePresetUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description Preset updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["EncodePresetResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/output-destinations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List saved output destinations */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Saved output destinations */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OutputDestinationListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Save an output destination */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["OutputDestinationCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description Destination saved */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OutputDestinationResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/output-destinations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a saved output destination */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Destination deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update a saved output destination */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["OutputDestinationUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description Destination updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OutputDestinationResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/jobs": {
         parameters: {
             query?: never;
@@ -1664,6 +1908,32 @@ export interface components {
             jobId: string;
             amount: number;
         };
+        CompatibilityWarning: {
+            code: string;
+            message: string;
+            /** @enum {string} */
+            severity?: "info" | "warning" | "error";
+        };
+        MediaColorProbe: {
+            /** @enum {string} */
+            kind?: "sdr" | "hdr10" | "hlg" | "unknown" | "conflicting";
+            primaries?: string | null;
+            transfer?: string | null;
+            matrix?: string | null;
+            range?: string | null;
+            notes?: string[];
+        };
+        MediaProbe: {
+            durationSec?: number;
+            codec?: string | null;
+            width?: number | null;
+            height?: number | null;
+            fps?: number | null;
+            audioStreams?: number;
+            audioCodec?: string | null;
+            container?: string | null;
+            color?: components["schemas"]["MediaColorProbe"];
+        };
         JobCreateRequest: {
             /** @description Your stable job identifier for reconciliation in status responses and webhooks. */
             externalId?: string;
@@ -1704,6 +1974,21 @@ export interface components {
             policy?: "fastest" | "gpu_first" | "gpu_only";
             /** @enum {string} */
             quality?: "good" | "better" | "best";
+            /**
+             * @default transcode-aac
+             * @enum {string}
+             */
+            audioPolicy?: "auto" | "copy" | "transcode-aac" | "strip";
+            /**
+             * @default force
+             * @enum {string}
+             */
+            frameRatePolicy?: "preserve" | "cap" | "force";
+            /**
+             * @default no-upscale
+             * @enum {string}
+             */
+            scalePolicy?: "no-upscale" | "allow-upscale" | "downscale-only";
             /**
              * Format: uri
              * @description Optional direct HTTP(S) ingest. When provided, upload URL is not returned.
@@ -1756,6 +2041,7 @@ export interface components {
                  */
                 effectivePasses?: 1 | 2;
             };
+            warnings?: components["schemas"]["CompatibilityWarning"][];
         };
         ProbeDurationResponse: {
             durationSec?: number;
@@ -1784,6 +2070,12 @@ export interface components {
             /** @enum {string} */
             optimize?: "none" | "vmaf";
             vmafTarget?: number;
+            /** @enum {string} */
+            audioPolicy?: "auto" | "copy" | "transcode-aac" | "strip";
+            /** @enum {string} */
+            frameRatePolicy?: "preserve" | "cap" | "force";
+            /** @enum {string} */
+            scalePolicy?: "no-upscale" | "allow-upscale" | "downscale-only";
         };
         ApproveUnifiedResponse: {
             ok?: boolean;
@@ -1800,6 +2092,7 @@ export interface components {
                  */
                 effectivePasses?: 1 | 2;
             };
+            warnings?: components["schemas"]["CompatibilityWarning"][];
         };
         ConfirmRequest: {
             /** @enum {string} */
@@ -1809,6 +2102,12 @@ export interface components {
             /** @enum {string} */
             optimize?: "none" | "vmaf";
             vmafTarget?: number;
+            /** @enum {string} */
+            audioPolicy?: "auto" | "copy" | "transcode-aac" | "strip";
+            /** @enum {string} */
+            frameRatePolicy?: "preserve" | "cap" | "force";
+            /** @enum {string} */
+            scalePolicy?: "no-upscale" | "allow-upscale" | "downscale-only";
         };
         ConfirmResponse: {
             ok?: boolean;
@@ -1823,6 +2122,10 @@ export interface components {
             outputFilename?: string | null;
             status?: string;
             ingest?: string | null;
+            /** @enum {string|null} */
+            container?: "mp4" | "mkv" | "webm" | "mov" | null;
+            /** @enum {string|null} */
+            quality?: "good" | "better" | "best" | null;
             output?: {
                 key?: string;
                 publicUrl?: string;
@@ -1837,6 +2140,21 @@ export interface components {
             /** Format: date-time */
             finishedAt?: string | null;
             failureMessage?: string | null;
+            requestedExecution?: {
+                [key: string]: unknown;
+            } | null;
+            effectiveExecution?: {
+                [key: string]: unknown;
+            } | null;
+            sourceProbe?: components["schemas"]["MediaProbe"];
+            outputProbe?: components["schemas"]["MediaProbe"];
+            warnings?: components["schemas"]["CompatibilityWarning"][];
+            billingSummary?: {
+                [key: string]: unknown;
+            } | null;
+            executionReport?: {
+                [key: string]: unknown;
+            } | null;
         };
         ErrorResponse: {
             /**
@@ -1867,6 +2185,12 @@ export interface components {
                 /** @enum {string} */
                 optimize?: "none" | "vmaf";
                 vmafTarget?: number;
+                /** @enum {string} */
+                audioPolicy?: "auto" | "copy" | "transcode-aac" | "strip";
+                /** @enum {string} */
+                frameRatePolicy?: "preserve" | "cap" | "force";
+                /** @enum {string} */
+                scalePolicy?: "no-upscale" | "allow-upscale" | "downscale-only";
             };
         };
         BulkCreateResponse: {
@@ -1886,7 +2210,9 @@ export interface components {
                 estimate?: {
                     neu?: number;
                 };
+                warnings?: components["schemas"]["CompatibilityWarning"][];
             }[];
+            warnings?: components["schemas"]["CompatibilityWarning"][];
         };
         BulkStatusResponse: {
             jobs?: components["schemas"]["StatusResponse"][];
@@ -1899,7 +2225,104 @@ export interface components {
                 container?: "mp4" | "mkv" | "webm" | "mov";
                 /** @enum {string} */
                 quality?: "good" | "better" | "best";
+                /** @enum {string} */
+                audioPolicy?: "auto" | "copy" | "transcode-aac" | "strip";
+                /** @enum {string} */
+                frameRatePolicy?: "preserve" | "cap" | "force";
+                /** @enum {string} */
+                scalePolicy?: "no-upscale" | "allow-upscale" | "downscale-only";
             };
+        };
+        EncodePresetSettings: {
+            /** @enum {string} */
+            codec: "h264" | "h265" | "av1";
+            /** @enum {string} */
+            resolution: "480p" | "720p" | "1080p" | "1440p" | "2160p" | "4320p";
+            fps: number;
+            /** @enum {string} */
+            preset: "fast" | "standard" | "slow";
+            /** @enum {string} */
+            bitrateTier: "low" | "medium" | "high";
+            /** @enum {integer} */
+            passes: 1 | 2;
+            /** @enum {string} */
+            policy: "gpu_only" | "gpu_first" | "fastest";
+            /** @enum {string} */
+            container: "mp4" | "mkv" | "webm" | "mov";
+            /** @enum {string} */
+            quality: "good" | "better" | "best";
+            /** @enum {string} */
+            optimize: "none" | "vmaf";
+            vmafTarget: number;
+            /** @enum {string} */
+            audioPolicy: "auto" | "copy" | "transcode-aac" | "strip";
+            /** @enum {string} */
+            frameRatePolicy: "preserve" | "cap" | "force";
+            /** @enum {string} */
+            scalePolicy: "no-upscale" | "allow-upscale" | "downscale-only";
+        };
+        EncodePresetCreateRequest: {
+            name: string;
+            settings: components["schemas"]["EncodePresetSettings"];
+        };
+        EncodePresetUpdateRequest: {
+            name?: string;
+            settings?: components["schemas"]["EncodePresetSettings"];
+        };
+        EncodePresetResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            settings?: components["schemas"]["EncodePresetSettings"];
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        EncodePresetListResponse: {
+            presets?: components["schemas"]["EncodePresetResponse"][];
+        };
+        OutputDestinationConfig: {
+            /** @enum {string} */
+            type: "cdn";
+            outputExpiry?: number;
+        } | {
+            /** @enum {string} */
+            type: "s3";
+            /** Format: uuid */
+            credentialId: string;
+            keyPrefix?: string;
+        } | {
+            /** @enum {string} */
+            type: "google-drive";
+            /** Format: uuid */
+            credentialId?: string;
+            folderId: string;
+            folderName?: string;
+            fileNameTemplate?: string;
+        };
+        OutputDestinationCreateRequest: {
+            name: string;
+            config: components["schemas"]["OutputDestinationConfig"];
+        };
+        OutputDestinationUpdateRequest: {
+            name?: string;
+            config?: components["schemas"]["OutputDestinationConfig"];
+        };
+        OutputDestinationResponse: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** @enum {string} */
+            destinationType?: "cdn" | "s3" | "google-drive";
+            config?: components["schemas"]["OutputDestinationConfig"];
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        OutputDestinationListResponse: {
+            destinations?: components["schemas"]["OutputDestinationResponse"][];
         };
         ApiKeyCreateRequest: {
             name: string;
@@ -2112,6 +2535,21 @@ export interface components {
              */
             quality?: "good" | "better" | "best";
             /**
+             * @default transcode-aac
+             * @enum {string}
+             */
+            audioPolicy?: "auto" | "copy" | "transcode-aac" | "strip";
+            /**
+             * @default force
+             * @enum {string}
+             */
+            frameRatePolicy?: "preserve" | "cap" | "force";
+            /**
+             * @default no-upscale
+             * @enum {string}
+             */
+            scalePolicy?: "no-upscale" | "allow-upscale" | "downscale-only";
+            /**
              * @default normal
              * @enum {string}
              */
@@ -2197,6 +2635,23 @@ export interface components {
             /** Format: date-time */
             finishedAt?: string | null;
             failureMessage?: string | null;
+            requestedExecution?: {
+                [key: string]: unknown;
+            } | null;
+            effectiveExecution?: {
+                [key: string]: unknown;
+            } | null;
+            sourceProbe?: components["schemas"]["MediaProbe"];
+            outputProbe?: components["schemas"]["MediaProbe"];
+            warnings?: {
+                [key: string]: unknown;
+            }[];
+            billingSummary?: {
+                [key: string]: unknown;
+            } | null;
+            executionReport?: {
+                [key: string]: unknown;
+            } | null;
         };
         OnDemandFolderIngestRequest: {
             /** @description Optional prefix used to generate one externalId per queued file as `${externalIdPrefix}:${fileName}`. */
@@ -2248,6 +2703,21 @@ export interface components {
              * @enum {string}
              */
             quality?: "good" | "better" | "best";
+            /**
+             * @default transcode-aac
+             * @enum {string}
+             */
+            audioPolicy?: "auto" | "copy" | "transcode-aac" | "strip";
+            /**
+             * @default force
+             * @enum {string}
+             */
+            frameRatePolicy?: "preserve" | "cap" | "force";
+            /**
+             * @default no-upscale
+             * @enum {string}
+             */
+            scalePolicy?: "no-upscale" | "allow-upscale" | "downscale-only";
             /**
              * @default normal
              * @enum {string}

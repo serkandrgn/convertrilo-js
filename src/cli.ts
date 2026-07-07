@@ -76,6 +76,9 @@ type EncodeOptions = OutputOptions & {
   codec?: "h264" | "h265" | "av1";
   resolution?: string;
   quality?: "good" | "better" | "best";
+  audioPolicy?: "auto" | "copy" | "transcode-aac" | "strip";
+  frameRatePolicy?: "preserve" | "cap" | "force";
+  scalePolicy?: "no-upscale" | "allow-upscale" | "downscale-only";
   priority?: "normal" | "high";
   preset?: "fast" | "standard" | "slow";
   bitrateTier?: "low" | "medium" | "high";
@@ -143,6 +146,38 @@ function formatJobLine(status: Record<string, unknown>) {
   return parts.join(" ");
 }
 
+function formatMediaProbe(probe: unknown) {
+  if (!probe || typeof probe !== "object") return undefined;
+  const record = probe as Record<string, any>;
+  const size = record.width && record.height ? `${record.width}x${record.height}` : undefined;
+  const fps = typeof record.fps === "number" ? `${record.fps.toFixed(2)}fps` : undefined;
+  const color = record.color?.kind ? `color=${record.color.kind}` : undefined;
+  return [record.codec, size, fps, record.audioCodec ? `audio=${record.audioCodec}` : undefined, color]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function formatExecution(record: Record<string, unknown>, key: string) {
+  const execution = record[key];
+  if (!execution || typeof execution !== "object") return undefined;
+  const fields = Object.entries(execution as Record<string, unknown>)
+    .filter(([, value]) => value !== null && value !== undefined && typeof value !== "object")
+    .map(([name, value]) => `${name}=${String(value)}`);
+  return fields.length ? fields.join(" ") : undefined;
+}
+
+function formatWarnings(warnings: unknown) {
+  if (!Array.isArray(warnings) || warnings.length === 0) return undefined;
+  return warnings
+    .map((warning) => {
+      if (!warning || typeof warning !== "object") return undefined;
+      const record = warning as Record<string, unknown>;
+      return record.message ?? record.code;
+    })
+    .filter(Boolean)
+    .join("; ");
+}
+
 function createProgressReporter(options: OutputOptions = {}) {
   if (wantsMachineOutput(options) || !process.stderr.isTTY) return undefined;
 
@@ -192,6 +227,11 @@ function output(value: unknown, options: OutputOptions = {}) {
       ["downloadUrl", record.downloadUrl],
       ["finishedAt", record.finishedAt],
       ["failureMessage", record.failureMessage],
+      ["source", formatMediaProbe(record.sourceProbe)],
+      ["output", formatMediaProbe(record.outputProbe)],
+      ["requested", formatExecution(record, "requestedExecution")],
+      ["effective", formatExecution(record, "effectiveExecution")],
+      ["warnings", formatWarnings(record.warnings)],
     ] as const;
     for (const [key, item] of rows) {
       if (item === null || item === undefined) continue;
@@ -250,6 +290,9 @@ function buildEncodeRequest(sourceUrl: string, options: EncodeOptions) {
     ["bitrateTier", "bitrateTier"],
     ["container", "container"],
     ["quality", "quality"],
+    ["audioPolicy", "audioPolicy"],
+    ["frameRatePolicy", "frameRatePolicy"],
+    ["scalePolicy", "scalePolicy"],
     ["priority", "priority"],
     ["webhook", "webhook"],
     ["optimize", "optimize"],
@@ -373,6 +416,9 @@ function addEncodeOptions(command: Command) {
     .addOption(new Option("--codec <codec>").choices(["h264", "h265", "av1"]))
     .option("--resolution <resolution>")
     .addOption(new Option("--quality <quality>").choices(["good", "better", "best"]))
+    .addOption(new Option("--audio-policy <policy>").choices(["auto", "copy", "transcode-aac", "strip"]))
+    .addOption(new Option("--frame-rate-policy <policy>").choices(["preserve", "cap", "force"]))
+    .addOption(new Option("--scale-policy <policy>").choices(["no-upscale", "allow-upscale", "downscale-only"]))
     .addOption(new Option("--priority <priority>").choices(["normal", "high"]))
     .addOption(new Option("--preset <preset>").choices(["fast", "standard", "slow"]))
     .addOption(new Option("--bitrate-tier <tier>").choices(["low", "medium", "high"]))
@@ -485,7 +531,7 @@ const program = new Command();
 program
   .name("convertrilo")
   .description("Convertrilo video encoding CLI")
-  .version("0.2.5")
+  .version("0.2.6")
   .action(async () => {
     await runWizard();
   });

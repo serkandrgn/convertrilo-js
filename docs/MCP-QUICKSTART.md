@@ -68,6 +68,24 @@ During local package development, point the client at the built file:
 Start by calling `get_token_balance`. Then create jobs with explicit codec,
 resolution, quality, priority, and destination settings.
 
+Example `create_encode_job` arguments:
+
+```json
+{
+  "sourceUrl": "https://example.com/input.mp4",
+  "codec": "h264",
+  "resolution": "1080p",
+  "quality": "better",
+  "audioPolicy": "transcode-aac",
+  "frameRatePolicy": "cap",
+  "scalePolicy": "no-upscale",
+  "idempotencyKey": "asset-123:h264:1080p"
+}
+```
+
+After `wait_for_job`, inspect `effectiveExecution`, `sourceProbe`,
+`outputProbe`, and `warnings` before reporting success to a user.
+
 ## Safety Notes
 
 Use scoped API keys. Agents should only receive the permissions needed for the
