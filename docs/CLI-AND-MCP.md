@@ -19,6 +19,15 @@ export CONVERTRILO_BASE_URL="https://api.convertrilo.com"
 
 `CONVERTRILO_BASE_URL` is optional and defaults to production.
 
+For local machines, you can also save credentials once:
+
+```bash
+convertrilo login
+```
+
+Both `convertrilo` and `convertrilo-mcp` read `~/.convertrilo/config.json`.
+Environment variables still override saved config for CI and hosted agents.
+
 ## CLI
 
 Create a job:
@@ -114,6 +123,19 @@ Example MCP client config:
 {
   "mcpServers": {
     "convertrilo": {
+      "command": "convertrilo-mcp"
+    }
+  }
+}
+```
+
+If the client runs on a different host or cannot read your saved CLI config, pass
+credentials through the MCP client environment:
+
+```json
+{
+  "mcpServers": {
+    "convertrilo": {
       "command": "convertrilo-mcp",
       "env": {
         "CONVERTRILO_API_KEY": "cvr_...",
@@ -133,3 +155,58 @@ Available tools:
 - `get_token_balance`
 
 Agents should use scoped API keys and deterministic idempotency keys. Do not give an agent broader account permissions than the workflow requires.
+
+## MCP Smoke Test
+
+From this repo, after `npm run build`, verify initialize, tool listing, and a
+read-only balance call:
+
+```bash
+node --input-type=module - <<'NODE'
+import { spawn } from "node:child_process";
+
+const child = spawn(process.execPath, ["dist/src/mcp.js"], {
+  stdio: ["pipe", "pipe", "pipe"],
+  env: process.env,
+});
+
+const responses = [];
+let stdout = "";
+let stderr = "";
+
+child.stdout.on("data", (chunk) => {
+  stdout += chunk;
+  for (;;) {
+    const idx = stdout.indexOf("\\n");
+    if (idx === -1) break;
+    const line = stdout.slice(0, idx);
+    stdout = stdout.slice(idx + 1);
+    if (line.trim()) responses.push(JSON.parse(line));
+  }
+});
+
+child.stderr.on("data", (chunk) => {
+  stderr += chunk;
+});
+
+function send(message) {
+  child.stdin.write(`${JSON.stringify(message)}\\n`);
+}
+
+send({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} });
+send({ jsonrpc: "2.0", method: "notifications/initialized" });
+send({ jsonrpc: "2.0", id: 2, method: "tools/list" });
+send({
+  jsonrpc: "2.0",
+  id: 3,
+  method: "tools/call",
+  params: { name: "get_token_balance", arguments: {} },
+});
+
+await new Promise((resolve) => setTimeout(resolve, 5000));
+child.kill("SIGTERM");
+await new Promise((resolve) => child.on("close", resolve));
+
+console.log(JSON.stringify({ responses, stderr }, null, 2));
+NODE
+```

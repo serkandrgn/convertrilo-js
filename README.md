@@ -53,6 +53,8 @@ S3 output examples, VMAF, two-pass, status, cancel, and balance workflows.
 If you want the simplest terminal walkthrough, start with
 [`docs/CLI-QUICKSTART.md`](docs/CLI-QUICKSTART.md).
 
+For agent/client setup, use [`docs/MCP-QUICKSTART.md`](docs/MCP-QUICKSTART.md).
+
 MCP registry metadata lives in [`server.json`](server.json).
 
 ## Create A Client

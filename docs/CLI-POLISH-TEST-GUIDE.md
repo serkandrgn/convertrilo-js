@@ -129,6 +129,61 @@ node dist/src/cli.js wait JOB_ID --json
 node dist/src/cli.js cancel JOB_ID --json
 ```
 
+## MCP Smoke Test
+
+The MCP server should initialize, list tools, and call a read-only balance tool.
+It uses the same saved config as `node dist/src/cli.js login`.
+
+```bash
+node --input-type=module - <<'NODE'
+import { spawn } from "node:child_process";
+
+const child = spawn(process.execPath, ["dist/src/mcp.js"], {
+  stdio: ["pipe", "pipe", "pipe"],
+  env: process.env,
+});
+
+const responses = [];
+let stdout = "";
+let stderr = "";
+
+child.stdout.on("data", (chunk) => {
+  stdout += chunk;
+  for (;;) {
+    const idx = stdout.indexOf("\\n");
+    if (idx === -1) break;
+    const line = stdout.slice(0, idx);
+    stdout = stdout.slice(idx + 1);
+    if (line.trim()) responses.push(JSON.parse(line));
+  }
+});
+
+child.stderr.on("data", (chunk) => {
+  stderr += chunk;
+});
+
+function send(message) {
+  child.stdin.write(`${JSON.stringify(message)}\\n`);
+}
+
+send({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} });
+send({ jsonrpc: "2.0", method: "notifications/initialized" });
+send({ jsonrpc: "2.0", id: 2, method: "tools/list" });
+send({
+  jsonrpc: "2.0",
+  id: 3,
+  method: "tools/call",
+  params: { name: "get_token_balance", arguments: {} },
+});
+
+await new Promise((resolve) => setTimeout(resolve, 5000));
+child.kill("SIGTERM");
+await new Promise((resolve) => child.on("close", resolve));
+
+console.log(JSON.stringify({ responses, stderr }, null, 2));
+NODE
+```
+
 ## New Output Helpers
 
 Print one field:
