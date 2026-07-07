@@ -4,6 +4,7 @@ import { confirm, input, password, select } from "@inquirer/prompts";
 import { spawn } from "node:child_process";
 import { createWriteStream } from "node:fs";
 import { pipeline } from "node:stream/promises";
+import { ConvertriloApiError } from "./index.js";
 import {
   createAutomationClientFromResolvedConfig,
   createEncodeJob,
@@ -20,6 +21,42 @@ import {
 
 const appUrl = "https://convertrilo.com";
 const developerSettingsUrl = `${appUrl}/dashboard/user/developer`;
+const completions = {
+  bash: `# Add this to ~/.bashrc:
+_convertrilo_completion() {
+  local cur commands
+  COMPREPLY=()
+  cur="\${COMP_WORDS[COMP_CWORD]}"
+  commands="login init dashboard keys logout config config:set config:get encode status wait cancel balance doctor download completion"
+  if [[ \${COMP_CWORD} -eq 1 ]]; then
+    COMPREPLY=( $(compgen -W "\${commands}" -- "\${cur}") )
+  fi
+}
+complete -F _convertrilo_completion convertrilo`,
+  zsh: `# Add this to ~/.zshrc:
+_convertrilo() {
+  local -a commands
+  commands=(
+    'login:save your API key locally'
+    'init:alias for login'
+    'dashboard:open Developer Settings'
+    'keys:open Developer Settings'
+    'logout:clear saved credentials'
+    'config:manage saved CLI config'
+    'encode:create an encode job'
+    'status:read job status'
+    'wait:wait for a job'
+    'cancel:cancel a job'
+    'balance:read token balance'
+    'doctor:check CLI configuration'
+    'download:download a job output'
+    'completion:print shell completion'
+  )
+  _describe 'command' commands
+}
+compdef _convertrilo convertrilo`,
+  fish: `complete -c convertrilo -f -n "__fish_use_subcommand" -a "login init dashboard keys logout config encode status wait cancel balance doctor download completion"`,
+} as const;
 
 type OutputOptions = {
   json?: boolean;
@@ -77,6 +114,47 @@ async function resolvedConfig() {
 
 async function getClient() {
   return createAutomationClientFromResolvedConfig(await resolvedConfig());
+}
+
+function wantsMachineOutput(options: OutputOptions = {}) {
+  return Boolean(
+    options.json ||
+      options.field ||
+      options.jobIdOnly ||
+      options.downloadUrlOnly,
+  );
+}
+
+function formatProgressValue(progress: unknown) {
+  if (typeof progress !== "number" || Number.isNaN(progress)) return "";
+  if (progress <= 1) return `${Math.round(progress * 100)}%`;
+  return `${Math.round(progress)}%`;
+}
+
+function formatJobLine(status: Record<string, unknown>) {
+  const parts = [
+    `status=${String(status.status ?? "unknown")}`,
+    `progress=${formatProgressValue(status.progress) || "pending"}`,
+  ];
+  if (status.encoder) parts.push(`encoder=${String(status.encoder)}`);
+  if (status.failureMessage) parts.push(`error=${String(status.failureMessage)}`);
+  return parts.join(" ");
+}
+
+function createProgressReporter(options: OutputOptions = {}) {
+  if (wantsMachineOutput(options) || !process.stderr.isTTY) return undefined;
+
+  let lastLength = 0;
+  return (status: Record<string, unknown>) => {
+    const line = `Waiting: ${formatJobLine(status)}`;
+    const padding = lastLength > line.length ? " ".repeat(lastLength - line.length) : "";
+    process.stderr.write(`\r${line}${padding}`);
+    lastLength = line.length;
+  };
+}
+
+function finishProgress(reporter: ((status: Record<string, unknown>) => void) | undefined) {
+  if (reporter) process.stderr.write("\n");
 }
 
 function output(value: unknown, options: OutputOptions = {}) {
@@ -221,19 +299,21 @@ async function createAndMaybeWait(sourceUrl: string, options: EncodeOptions) {
   const jobId = (created as { jobId?: string }).jobId;
   if (!jobId) throw new Error("Create response did not include jobId");
 
-  const finalStatus = await waitForJob(client, jobId, {
-    pollIntervalMs: options.pollIntervalMs,
-    timeoutMs: options.timeoutMs,
-    onPoll: (status) => {
-      if (!options.json && !options.field && !options.downloadUrlOnly) {
-        process.stderr.write(
-          `status=${String(status.status ?? "unknown")} progress=${String(
-            status.progress ?? "",
-          )}\n`,
-        );
-      }
-    },
-  });
+  if (!wantsMachineOutput(options)) {
+    process.stderr.write(`Created job ${jobId}\n`);
+  }
+  const reportProgress = createProgressReporter(options);
+  const finalStatus = await (async () => {
+    try {
+      return await waitForJob(client, jobId, {
+        pollIntervalMs: options.pollIntervalMs,
+        timeoutMs: options.timeoutMs,
+        onPoll: reportProgress,
+      });
+    } finally {
+      finishProgress(reportProgress);
+    }
+  })();
   output(finalStatus, options);
 }
 
@@ -319,12 +399,32 @@ function addEncodeOptions(command: Command) {
 async function statusForDownload(jobId: string, options: DownloadOptions) {
   const client = await getClient();
   if (options.wait) {
-    return waitForJob(client, jobId, {
-      pollIntervalMs: options.pollIntervalMs,
-      timeoutMs: options.timeoutMs,
-    });
+    const reportProgress = createProgressReporter(options);
+    try {
+      return await waitForJob(client, jobId, {
+        pollIntervalMs: options.pollIntervalMs,
+        timeoutMs: options.timeoutMs,
+        onPoll: reportProgress,
+      });
+    } finally {
+      finishProgress(reportProgress);
+    }
   }
   return client.onDemandStatus(jobId);
+}
+
+async function waitAndOutputJob(jobId: string, options: DownloadOptions) {
+  const client = await getClient();
+  const reportProgress = createProgressReporter(options);
+  try {
+    return await waitForJob(client, jobId, {
+      pollIntervalMs: options.pollIntervalMs,
+      timeoutMs: options.timeoutMs,
+      onPoll: reportProgress,
+    });
+  } finally {
+    finishProgress(reportProgress);
+  }
 }
 
 async function downloadJob(jobId: string, options: DownloadOptions) {
@@ -383,13 +483,14 @@ const program = new Command();
 program
   .name("convertrilo")
   .description("Convertrilo video encoding CLI")
-  .version("0.2.0")
+  .version("0.2.1")
   .action(async () => {
     await runWizard();
   });
 
 program
   .command("login")
+  .alias("init")
   .description("save your Convertrilo API key locally")
   .option("--api-key <key>", "API key")
   .option("--base-url <url>", "API base URL")
@@ -412,6 +513,17 @@ program
       }));
     await updateCliConfig({ apiKey, baseUrl });
     process.stdout.write(`Saved config to ${configPath}\n`);
+  });
+
+program
+  .command("completion")
+  .description("print shell completion setup")
+  .argument("[shell]", "bash, zsh, or fish", "zsh")
+  .action((shell) => {
+    if (!["bash", "zsh", "fish"].includes(shell)) {
+      throw new Error("shell must be bash, zsh, or fish");
+    }
+    process.stdout.write(`${completions[shell as keyof typeof completions]}\n`);
   });
 
 program
@@ -530,14 +642,7 @@ addOutputOptions(
   .option("--poll-interval-ms <ms>", "wait poll interval", Number)
   .option("--timeout-ms <ms>", "wait timeout", Number)
   .action(async (jobId, options) => {
-    const client = await getClient();
-    output(
-      await waitForJob(client, jobId, {
-        pollIntervalMs: options.pollIntervalMs,
-        timeoutMs: options.timeoutMs,
-      }),
-      options,
-    );
+    output(await waitAndOutputJob(jobId, options), options);
   });
 
 addOutputOptions(
@@ -568,7 +673,48 @@ addOutputOptions(
   .action(downloadJob);
 
 program.parseAsync(process.argv).catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = formatCliError(error);
   process.stderr.write(`convertrilo: ${message}\n`);
   process.exitCode = 1;
 });
+
+function parseErrorBody(body: string) {
+  try {
+    const parsed = JSON.parse(body) as unknown;
+    if (parsed && typeof parsed === "object") {
+      const record = parsed as Record<string, unknown>;
+      return String(record.message ?? record.error ?? body);
+    }
+  } catch {
+    // Plain-text API responses are fine.
+  }
+  return body;
+}
+
+function formatCliError(error: unknown) {
+  if (error instanceof ConvertriloApiError) {
+    const detail = parseErrorBody(error.body).trim();
+    if (error.status === 401 || error.status === 403) {
+      return `API key was rejected. Run \`convertrilo login\` to save a valid key, or open ${developerSettingsUrl}.`;
+    }
+    if (error.status === 402) {
+      return `Not enough tokens or billing requires attention.${detail ? ` ${detail}` : ""}`;
+    }
+    if (error.status === 404) {
+      return `Not found.${detail ? ` ${detail}` : ""}`;
+    }
+    if (error.status === 409) {
+      return `Request conflicts with existing state.${detail ? ` ${detail}` : ""}`;
+    }
+    if (error.status === 400 || error.status === 422) {
+      return `Invalid request.${detail ? ` ${detail}` : ""}`;
+    }
+    if (error.status >= 500) {
+      return `Convertrilo API is having trouble right now. HTTP ${error.status}.${detail ? ` ${detail}` : ""}`;
+    }
+    return `HTTP ${error.status} ${error.statusText}.${detail ? ` ${detail}` : ""}`;
+  }
+
+  if (error instanceof Error) return error.message;
+  return String(error);
+}

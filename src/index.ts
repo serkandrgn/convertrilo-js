@@ -24,6 +24,20 @@ export type RequestOptions = {
   idempotencyKey?: string;
 };
 
+export class ConvertriloApiError extends Error {
+  status: number;
+  statusText: string;
+  body: string;
+
+  constructor(status: number, statusText: string, body: string) {
+    super(`HTTP ${status} ${statusText}: ${body}`);
+    this.name = "ConvertriloApiError";
+    this.status = status;
+    this.statusText = statusText;
+    this.body = body;
+  }
+}
+
 export class ConvertriloClient {
   private baseUrl: string;
   private getToken?: () => Promise<string> | string;
@@ -60,7 +74,7 @@ export class ConvertriloClient {
     });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      throw new Error(`HTTP ${res.status} ${res.statusText}: ${text}`);
+      throw new ConvertriloApiError(res.status, res.statusText, text);
     }
     if (res.status === 204) return undefined as any;
     return (await res.json()) as T;

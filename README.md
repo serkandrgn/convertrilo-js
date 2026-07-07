@@ -37,8 +37,15 @@ convertrilo-mcp
 Use `convertrilo` for scripts, CI, cron, and local operations. Use `convertrilo-mcp`
 as a stdio MCP server for agent and workflow integrations.
 
-Run `convertrilo login` to save an API key locally, or run `convertrilo` with no
-arguments to start the interactive encode wizard.
+Run `convertrilo login` or `convertrilo init` to save an API key locally, or run
+`convertrilo` with no arguments to start the interactive encode wizard. Waiting
+commands show terminal progress by default and keep `--json` clean for scripts.
+
+Shell completion snippets are available with:
+
+```bash
+convertrilo completion zsh
+```
 
 See [`docs/CLI-AND-MCP.md`](docs/CLI-AND-MCP.md) for commands, MCP client config,
 S3 output examples, VMAF, two-pass, status, cancel, and balance workflows.

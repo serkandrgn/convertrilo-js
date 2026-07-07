@@ -29,6 +29,7 @@ convertrilo login
 ```
 
 This shows where to create/copy an API key, then saves it at `~/.convertrilo/config.json`.
+`convertrilo init` does the same thing.
 
 You can open the API key page directly:
 
@@ -62,6 +63,12 @@ convertrilo balance --json
 ```
 
 If you see token balance JSON, the CLI is connected.
+
+Optional shell completion:
+
+```bash
+convertrilo completion zsh
+```
 
 ## 3. Encode A Video And Wait
 
@@ -204,6 +211,16 @@ or:
 ```bash
 export CONVERTRILO_API_KEY="cvr_your_api_key_here"
 ```
+
+### API Key Rejected
+
+Run:
+
+```bash
+convertrilo login --open
+```
+
+Then create or copy a key from Developer Settings and paste it into the prompt.
 
 ### The Output Is Huge
 

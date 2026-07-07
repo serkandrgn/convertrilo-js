@@ -1,12 +1,16 @@
 # Release Checklist
 
-Current release: `0.2.0`
+Current release: `0.2.1`
 
 - Replaces custom CLI parsing with `commander`.
 - Adds no-args interactive encode wizard.
 - Adds `login`, `logout`, `dashboard`, `doctor`, `download`, and friendly config commands.
 - Adds output helpers: `--field`, `--job-id-only`, and `--download-url-only`.
 - Adds local config storage at `~/.convertrilo/config.json`.
+- Adds progress-aware terminal output for `encode --wait`, `wait`, and `download --wait`.
+- Adds `convertrilo init` as an alias for `convertrilo login`.
+- Adds `convertrilo completion bash|zsh|fish`.
+- Improves API error messages for rejected keys, billing/token issues, invalid requests, missing jobs, and API trouble.
 
 1. Update `openapi.yaml` from the backend API spec.
 2. Run `npm run generate`.
@@ -23,8 +27,8 @@ Current release: `0.2.0`
 8. Commit and tag:
 
    ```bash
-   git commit -am "Release v0.2.0"
-   git tag v0.2.0
+   git commit -am "Release v0.2.1"
+   git tag v0.2.1
    ```
 
 9. Publish:
