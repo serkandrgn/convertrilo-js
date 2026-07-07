@@ -3,7 +3,7 @@
   "name": "io.github.serkandrgn/convertrilo",
   "title": "Convertrilo",
   "description": "Create and manage Convertrilo video encoding jobs from MCP clients and agent workflows.",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "repository": {
     "url": "https://github.com/serkandrgn/convertrilo-js",
     "source": "github"
@@ -12,7 +12,7 @@
     {
       "registryType": "npm",
       "identifier": "@convertrilo/sdk",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "transport": {
         "type": "stdio"
       }

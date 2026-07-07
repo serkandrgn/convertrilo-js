@@ -1,6 +1,6 @@
 # Release Checklist
 
-Current release: `0.2.3`
+Current release: `0.2.4`
 
 - Replaces custom CLI parsing with `commander`.
 - Adds no-args interactive encode wizard.
@@ -29,8 +29,8 @@ Current release: `0.2.3`
 8. Commit and tag:
 
    ```bash
-   git commit -am "Release v0.2.3"
-   git tag v0.2.3
+   git commit -am "Release v0.2.4"
+   git tag v0.2.4
    ```
 
 9. Publish:
