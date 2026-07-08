@@ -83,6 +83,21 @@ type EncodeOptions = OutputOptions & {
   preset?: "fast" | "standard" | "slow";
   bitrateTier?: "low" | "medium" | "high";
   container?: "mp4" | "mkv" | "webm" | "mov";
+  jobMode?: "encode" | "hls";
+  packageType?: "hls";
+  hlsSegmentDuration?: number;
+  hlsRenditions?: string;
+  hlsGopSeconds?: number;
+  hlsAudioTrackIndex?: number;
+  hlsPoster?: boolean;
+  hlsPosterAtSec?: number;
+  hlsThumbnails?: boolean;
+  hlsThumbnailInterval?: number;
+  hlsThumbnailWidth?: number;
+  hlsSubtitleWebvttUrl?: string;
+  hlsSubtitleLanguage?: string;
+  hlsSubtitleName?: string;
+  hlsPrivatePlayback?: boolean;
   fps?: number;
   passes?: 1 | 2;
   optimize?: "none" | "vmaf";
@@ -289,6 +304,8 @@ function buildEncodeRequest(sourceUrl: string, options: EncodeOptions) {
     ["preset", "preset"],
     ["bitrateTier", "bitrateTier"],
     ["container", "container"],
+    ["jobMode", "jobMode"],
+    ["packageType", "packageType"],
     ["quality", "quality"],
     ["audioPolicy", "audioPolicy"],
     ["frameRatePolicy", "frameRatePolicy"],
@@ -313,6 +330,45 @@ function buildEncodeRequest(sourceUrl: string, options: EncodeOptions) {
     request.metadata = parseJsonRecord(options.metadata, "--metadata");
   }
 
+  if (
+    options.hlsSegmentDuration !== undefined ||
+    options.hlsRenditions ||
+    options.hlsGopSeconds !== undefined ||
+    options.hlsAudioTrackIndex !== undefined ||
+    options.hlsPoster ||
+    options.hlsPosterAtSec !== undefined ||
+    options.hlsThumbnails ||
+    options.hlsThumbnailInterval !== undefined ||
+    options.hlsThumbnailWidth !== undefined ||
+    options.hlsSubtitleWebvttUrl ||
+    options.hlsPrivatePlayback
+  ) {
+    request.hls = {
+      segmentDuration: options.hlsSegmentDuration,
+      gopSeconds: options.hlsGopSeconds,
+      audioTrackIndex: options.hlsAudioTrackIndex,
+      poster: options.hlsPoster,
+      posterAtSec: options.hlsPosterAtSec,
+      thumbnails:
+        options.hlsThumbnails ||
+        options.hlsThumbnailInterval !== undefined ||
+        options.hlsThumbnailWidth !== undefined
+          ? {
+              enabled: options.hlsThumbnails ?? true,
+              intervalSec: options.hlsThumbnailInterval,
+              width: options.hlsThumbnailWidth,
+            }
+          : undefined,
+      subtitleWebvttUrl: options.hlsSubtitleWebvttUrl,
+      subtitleLanguage: options.hlsSubtitleLanguage,
+      subtitleName: options.hlsSubtitleName,
+      privatePlayback: options.hlsPrivatePlayback,
+      renditions: options.hlsRenditions
+        ? parseHlsRenditions(options.hlsRenditions)
+        : undefined,
+    };
+  }
+
   if (options.outputS3Bucket) {
     request.outputS3 = {
       bucket: options.outputS3Bucket,
@@ -326,6 +382,16 @@ function buildEncodeRequest(sourceUrl: string, options: EncodeOptions) {
   }
 
   return request;
+}
+
+function parseHlsRenditions(value: string): NonNullable<EncodeRequest["hls"]>["renditions"] {
+  return value.split(",").map((part) => {
+    const height = Number(part.trim());
+    if (![360, 480, 540, 720, 1080].includes(height)) {
+      throw new Error("--hls-renditions must contain 360, 480, 540, 720, or 1080");
+    }
+    return { height: height as 360 | 480 | 540 | 720 | 1080 };
+  });
 }
 
 async function createAndMaybeWait(sourceUrl: string, options: EncodeOptions) {
@@ -423,6 +489,21 @@ function addEncodeOptions(command: Command) {
     .addOption(new Option("--preset <preset>").choices(["fast", "standard", "slow"]))
     .addOption(new Option("--bitrate-tier <tier>").choices(["low", "medium", "high"]))
     .addOption(new Option("--container <container>").choices(["mp4", "mkv", "webm", "mov"]))
+    .addOption(new Option("--job-mode <mode>").choices(["encode", "hls"]))
+    .addOption(new Option("--package-type <type>").choices(["hls"]))
+    .option("--hls-segment-duration <seconds>", "HLS segment duration, 2-10 seconds", Number)
+    .option("--hls-renditions <heights>", "comma-separated HLS rendition heights, e.g. 720,360")
+    .option("--hls-gop-seconds <seconds>", "HLS keyframe/GOP interval in seconds", Number)
+    .option("--hls-audio-track-index <index>", "zero-based source audio track index", Number)
+    .option("--hls-poster", "generate poster.jpg")
+    .option("--hls-poster-at-sec <seconds>", "poster timestamp in seconds", Number)
+    .option("--hls-thumbnails", "generate thumbnail sprite and VTT")
+    .option("--hls-thumbnail-interval <seconds>", "thumbnail sprite interval", Number)
+    .option("--hls-thumbnail-width <pixels>", "thumbnail sprite tile width", Number)
+    .option("--hls-subtitle-webvtt-url <url>", "package a sidecar WebVTT subtitle URL")
+    .option("--hls-subtitle-language <code>", "subtitle language code")
+    .option("--hls-subtitle-name <name>", "subtitle display name")
+    .option("--hls-private-playback", "mark playback as private-requested in package metadata")
     .option("--fps <number>", "frames per second", Number)
     .option("--passes <number>", "encoding passes", Number)
     .addOption(new Option("--optimize <mode>").choices(["none", "vmaf"]))
@@ -531,7 +612,7 @@ const program = new Command();
 program
   .name("convertrilo")
   .description("Convertrilo video encoding CLI")
-  .version("0.2.6")
+  .version("0.2.7")
   .action(async () => {
     await runWizard();
   });

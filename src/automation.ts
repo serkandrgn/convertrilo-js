@@ -12,6 +12,29 @@ export type EncodeRequest = {
   preset?: "fast" | "standard" | "slow";
   bitrateTier?: "low" | "medium" | "high";
   container?: "mp4" | "mkv" | "webm" | "mov";
+  jobMode?: "encode" | "hls";
+  packageType?: "hls";
+  hls?: {
+    segmentDuration?: number;
+    audioTrackIndex?: number;
+    gopSeconds?: number;
+    poster?: boolean;
+    posterAtSec?: number;
+    thumbnails?: {
+      enabled?: boolean;
+      intervalSec?: number;
+      width?: number;
+    };
+    subtitleWebvttUrl?: string;
+    subtitleLanguage?: string;
+    subtitleName?: string;
+    privatePlayback?: boolean;
+    renditions?: Array<{
+      height: 360 | 480 | 540 | 720 | 1080;
+      videoBitrate?: string;
+      audioBitrate?: string;
+    }>;
+  };
   quality?: "good" | "better" | "best";
   audioPolicy?: "auto" | "copy" | "transcode-aac" | "strip";
   frameRatePolicy?: "preserve" | "cap" | "force";

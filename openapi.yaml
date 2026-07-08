@@ -867,6 +867,76 @@ components:
         bitrateTier:
           { type: string, enum: [low, medium, high], default: medium }
         container: { type: string, enum: [mp4, mkv, webm, mov], default: mp4 }
+        jobMode:
+          type: string
+          enum: [encode, hls]
+          default: encode
+          description: Use `hls` to create an HLS VOD package instead of a single output file. HLS output is H.264/AAC SDR; supported non-H.264/non-AAC source codecs are transcoded into the package.
+        packageType:
+          type: string
+          enum: [hls]
+          description: Alternative explicit package selector for HLS jobs.
+        hls:
+          type: object
+          properties:
+            segmentDuration:
+              type: integer
+              minimum: 2
+              maximum: 10
+              default: 6
+            audioTrackIndex:
+              type: integer
+              minimum: 0
+              maximum: 7
+            gopSeconds:
+              type: integer
+              minimum: 1
+              maximum: 10
+            poster:
+              type: boolean
+            posterAtSec:
+              type: number
+              minimum: 0
+            thumbnails:
+              type: object
+              properties:
+                enabled: { type: boolean }
+                intervalSec:
+                  type: integer
+                  minimum: 2
+                  maximum: 60
+                width:
+                  type: integer
+                  minimum: 96
+                  maximum: 320
+            subtitleWebvttUrl:
+              type: string
+              format: uri
+            subtitleLanguage:
+              type: string
+              minLength: 2
+              maxLength: 16
+            subtitleName:
+              type: string
+              minLength: 1
+              maxLength: 80
+            privatePlayback:
+              type: boolean
+            renditions:
+              type: array
+              minItems: 2
+              maxItems: 3
+              items:
+                type: object
+                required: [height]
+                properties:
+                  height: { type: integer, enum: [360, 480, 540, 720, 1080] }
+                  videoBitrate:
+                    type: string
+                    pattern: "^\\d+k$"
+                  audioBitrate:
+                    type: string
+                    pattern: "^\\d+k$"
         quality: { type: string, enum: [good, better, best], default: better }
         audioPolicy:
           {
@@ -928,6 +998,8 @@ components:
               enum: [1, 2]
               description: Pass count used for pricing and execution. VMAF requests use 1.
         statusUrl: { type: string }
+        packageType: { type: string, nullable: true }
+        playbackUrl: { type: string, nullable: true }
         webhook: { type: string, nullable: true }
     OnDemandStatusResponse:
       type: object
@@ -944,6 +1016,11 @@ components:
         progress: { type: number, nullable: true }
         encoder: { type: string, nullable: true }
         downloadUrl: { type: string, nullable: true }
+        playbackUrl: { type: string, nullable: true }
+        hlsPackage:
+          type: object
+          additionalProperties: true
+          nullable: true
         expiresIn: { type: integer, nullable: true }
         destination:
           oneOf:

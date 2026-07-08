@@ -53,6 +53,47 @@ const tools = [
         priority: { type: "string", enum: ["normal", "high"] },
         preset: { type: "string", enum: ["fast", "standard", "slow"] },
         container: { type: "string", enum: ["mp4", "mkv", "webm", "mov"] },
+        jobMode: { type: "string", enum: ["encode", "hls"] },
+        packageType: { type: "string", enum: ["hls"] },
+        hls: {
+          type: "object",
+          properties: {
+            segmentDuration: { type: "number", minimum: 2, maximum: 10 },
+            audioTrackIndex: { type: "number", minimum: 0, maximum: 7 },
+            gopSeconds: { type: "number", minimum: 1, maximum: 10 },
+            poster: { type: "boolean" },
+            posterAtSec: { type: "number", minimum: 0 },
+            thumbnails: {
+              type: "object",
+              properties: {
+                enabled: { type: "boolean" },
+                intervalSec: { type: "number", minimum: 2, maximum: 60 },
+                width: { type: "number", minimum: 96, maximum: 320 },
+              },
+              additionalProperties: false,
+            },
+            subtitleWebvttUrl: { type: "string" },
+            subtitleLanguage: { type: "string" },
+            subtitleName: { type: "string" },
+            privatePlayback: { type: "boolean" },
+            renditions: {
+              type: "array",
+              minItems: 2,
+              maxItems: 3,
+              items: {
+                type: "object",
+                required: ["height"],
+                properties: {
+                  height: { type: "number", enum: [360, 480, 540, 720, 1080] },
+                  videoBitrate: { type: "string" },
+                  audioBitrate: { type: "string" },
+                },
+                additionalProperties: false,
+              },
+            },
+          },
+          additionalProperties: false,
+        },
         fps: { type: "number" },
         passes: { type: "number", enum: [1, 2] },
         optimize: { type: "string", enum: ["none", "vmaf"] },
@@ -184,6 +225,8 @@ function buildEncodeRequest(args: Record<string, unknown>) {
     "priority",
     "preset",
     "container",
+    "jobMode",
+    "packageType",
     "optimize",
     "webhook",
   ];
@@ -207,6 +250,9 @@ function buildEncodeRequest(args: Record<string, unknown>) {
 
   const outputS3 = objectArg(args, "outputS3");
   if (outputS3) request.outputS3 = outputS3 as EncodeRequest["outputS3"];
+
+  const hls = objectArg(args, "hls");
+  if (hls) request.hls = hls as EncodeRequest["hls"];
 
   return request;
 }
@@ -258,7 +304,7 @@ async function handle(request: JsonRpcRequest) {
       capabilities: { tools: {} },
       serverInfo: {
         name: "convertrilo-mcp",
-        version: "0.2.6",
+        version: "0.2.7",
       },
     });
     return;

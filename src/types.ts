@@ -2530,6 +2530,41 @@ export interface components {
              */
             container?: "mp4" | "mkv" | "webm" | "mov";
             /**
+             * @description Use `hls` to create an HLS VOD package instead of a single output file. HLS output is H.264/AAC SDR; supported non-H.264/non-AAC source codecs are transcoded into the package.
+             * @default encode
+             * @enum {string}
+             */
+            jobMode?: "encode" | "hls";
+            /**
+             * @description Alternative explicit package selector for HLS jobs.
+             * @enum {string}
+             */
+            packageType?: "hls";
+            hls?: {
+                /** @default 6 */
+                segmentDuration?: number;
+                audioTrackIndex?: number;
+                gopSeconds?: number;
+                poster?: boolean;
+                posterAtSec?: number;
+                thumbnails?: {
+                    enabled?: boolean;
+                    intervalSec?: number;
+                    width?: number;
+                };
+                /** Format: uri */
+                subtitleWebvttUrl?: string;
+                subtitleLanguage?: string;
+                subtitleName?: string;
+                privatePlayback?: boolean;
+                renditions?: {
+                    /** @enum {integer} */
+                    height: 360 | 480 | 540 | 720 | 1080;
+                    videoBitrate?: string;
+                    audioBitrate?: string;
+                }[];
+            };
+            /**
              * @default better
              * @enum {string}
              */
@@ -2598,6 +2633,8 @@ export interface components {
                 effectivePasses?: 1 | 2;
             };
             statusUrl: string;
+            packageType?: string | null;
+            playbackUrl?: string | null;
             webhook?: string | null;
         };
         OnDemandStatusResponse: {
@@ -2613,6 +2650,10 @@ export interface components {
             progress?: number | null;
             encoder?: string | null;
             downloadUrl?: string | null;
+            playbackUrl?: string | null;
+            hlsPackage?: {
+                [key: string]: unknown;
+            } | null;
             expiresIn?: number | null;
             destination?: ({
                 /** @enum {string} */

@@ -1,6 +1,6 @@
 {
   "name": "@convertrilo/sdk",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "TypeScript client for the Convertrilo video encoding API",
   "mcpName": "io.github.serkandrgn/convertrilo",
   "private": false,
