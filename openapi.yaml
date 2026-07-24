@@ -231,6 +231,30 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CompatibilityWarning"
+    JobFilesDeleteResponse:
+      type: object
+      required: [ok, jobId, objectsDeleted, jobRetained]
+      properties:
+        ok: { type: boolean }
+        jobId: { type: string }
+        objectsDeleted:
+          type: integer
+          minimum: 0
+        jobRetained:
+          type: boolean
+          enum: [true]
+          description: The job and billing history remain available after managed files are deleted.
+    JobCancelResponse:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean }
+        released:
+          type: number
+          description: Actual reserved NEU returned to the account.
+        note:
+          type: string
+          description: Present when cancellation is a terminal-state no-op.
     ProbeDurationResponse:
       type: object
       properties:
@@ -385,6 +409,8 @@ components:
             - webhook_not_found
             - no_updates_provided
             - output_not_available
+            - job_active
+            - job_files_delete_failed
         message: { type: string }
         issues:
           description: Validation details for `invalid_body`.
@@ -1392,6 +1418,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /jobs/{id}:
+    delete:
+      security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
+      summary: Delete managed files for a terminal job
+      description: Permanently deletes managed upload and output objects while retaining the job record and billing history. Active jobs must be canceled first.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Managed files deleted and job record retained
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobFilesDeleteResponse"
+        "409":
+          description: Active job must be canceled before deleting files
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /jobs/{id}/probe-duration:
     get:
       security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }]
@@ -1502,7 +1551,12 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        "200": { description: Canceled or no-op }
+        "200":
+          description: Canceled or terminal-state no-op
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobCancelResponse"
 
   /api-keys:
     get:

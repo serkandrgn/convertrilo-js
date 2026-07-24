@@ -493,6 +493,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/jobs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete managed files for a terminal job
+         * @description Permanently deletes managed upload and output objects while retaining the job record and billing history. Active jobs must be canceled first.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Managed files deleted and job record retained */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JobFilesDeleteResponse"];
+                    };
+                };
+                /** @description Active job must be canceled before deleting files */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/jobs/{id}/probe-duration": {
         parameters: {
             query?: never;
@@ -710,12 +760,14 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Canceled or no-op */
+                /** @description Canceled or terminal-state no-op */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["JobCancelResponse"];
+                    };
                 };
             };
         };
@@ -2043,6 +2095,23 @@ export interface components {
             };
             warnings?: components["schemas"]["CompatibilityWarning"][];
         };
+        JobFilesDeleteResponse: {
+            ok: boolean;
+            jobId: string;
+            objectsDeleted: number;
+            /**
+             * @description The job and billing history remain available after managed files are deleted.
+             * @enum {boolean}
+             */
+            jobRetained: true;
+        };
+        JobCancelResponse: {
+            ok: boolean;
+            /** @description Actual reserved NEU returned to the account. */
+            released?: number;
+            /** @description Present when cancellation is a terminal-state no-op. */
+            note?: string;
+        };
         ProbeDurationResponse: {
             durationSec?: number;
             durationMinutes?: number;
@@ -2161,7 +2230,7 @@ export interface components {
              * @description Stable machine-readable error code. Branch on this instead of parsing `message`.
              * @enum {string}
              */
-            code: "invalid_api_key" | "api_key_expired" | "user_not_found" | "account_banned" | "missing_required_scope" | "invalid_request" | "invalid_body" | "invalid_url" | "url_ingest_disabled" | "url_host_blocked" | "signed_url_required" | "host_not_resolvable" | "private_ip_blocked" | "missing_content_length" | "file_too_large" | "unsupported_content_type" | "probe_failed" | "insufficient_tokens" | "idempotency_conflict" | "idempotency_in_progress" | "rate_limit_exceeded" | "not_found" | "forbidden" | "deprecated_dropbox" | "google_drive_not_connected" | "dropbox_not_connected" | "no_video_files_found" | "webhook_limit_exceeded" | "webhook_not_found" | "no_updates_provided" | "output_not_available";
+            code: "invalid_api_key" | "api_key_expired" | "user_not_found" | "account_banned" | "missing_required_scope" | "invalid_request" | "invalid_body" | "invalid_url" | "url_ingest_disabled" | "url_host_blocked" | "signed_url_required" | "host_not_resolvable" | "private_ip_blocked" | "missing_content_length" | "file_too_large" | "unsupported_content_type" | "probe_failed" | "insufficient_tokens" | "idempotency_conflict" | "idempotency_in_progress" | "rate_limit_exceeded" | "not_found" | "forbidden" | "deprecated_dropbox" | "google_drive_not_connected" | "dropbox_not_connected" | "no_video_files_found" | "webhook_limit_exceeded" | "webhook_not_found" | "no_updates_provided" | "output_not_available" | "job_active" | "job_files_delete_failed";
             message: string;
             /** @description Validation details for `invalid_body`. */
             issues?: unknown;

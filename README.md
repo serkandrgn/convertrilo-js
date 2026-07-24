@@ -124,6 +124,20 @@ const batch = await client.createJobsBulk({
 });
 ```
 
+## Job File Cleanup
+
+Delete managed upload and output objects after a job reaches a terminal state:
+
+```ts
+await client.cancelJob(jobId); // required first for created, queued, or running jobs
+
+const result = await client.deleteJobFiles(jobId);
+console.log(result.objectsDeleted, result.jobRetained);
+```
+
+The job record and billing history remain available for auditing. Active jobs return the stable
+`job_active` error until they are canceled.
+
 ## Saved Encode Presets
 
 Save reusable encode settings without storing source URLs, storage credentials, or output secrets:

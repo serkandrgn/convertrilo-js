@@ -229,7 +229,14 @@ export class ConvertriloClient {
     });
   }
   async cancelJob(id: string) {
-    return this.request(`/jobs/${id}/cancel`, { method: "POST" });
+    return this.request<
+      paths["/jobs/{id}/cancel"]["post"]["responses"]["200"]["content"]["application/json"]
+    >(`/jobs/${id}/cancel`, { method: "POST" });
+  }
+  async deleteJobFiles(id: string) {
+    return this.request<
+      paths["/jobs/{id}"]["delete"]["responses"]["200"]["content"]["application/json"]
+    >(`/jobs/${id}`, { method: "DELETE" });
   }
   async jobStatus(id: string) {
     return this.request<
@@ -422,10 +429,9 @@ export class ConvertriloClient {
   }
 
   async onDemandCancel(jobId: string) {
-    return this.request<{
-      ok: boolean;
-      released: number;
-    }>(`/ondemand/${jobId}`, { method: "DELETE" });
+    return this.request<
+      paths["/ondemand/{jobId}"]["delete"]["responses"]["200"]["content"]["application/json"]
+    >(`/ondemand/${jobId}`, { method: "DELETE" });
   }
 
   /**

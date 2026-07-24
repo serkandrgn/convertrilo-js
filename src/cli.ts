@@ -612,7 +612,7 @@ const program = new Command();
 program
   .name("convertrilo")
   .description("Convertrilo video encoding CLI")
-  .version("0.2.7")
+  .version("0.2.8")
   .action(async () => {
     await runWizard();
   });
